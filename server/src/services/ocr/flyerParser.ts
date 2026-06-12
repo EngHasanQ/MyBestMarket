@@ -42,6 +42,11 @@ export function parseFlyerText(text: string): FlyerCandidate[] {
     const letters = name.match(/[؀-ۿa-zA-Z]/g)?.length ?? 0;
     if (letters < 4) continue;
 
+    // ضد الضجيج (أرقام صفحات ونحوها): سعر صحيح بلا عملة ولا كسور
+    // يتطلب اسماً من كلمتين فأكثر
+    const hasCurrencyOrDecimal = /ر\.?\s?س|ريال|sar|sr/i.test(last[0]!) || last[1]!.includes('.') || /[.,٫]/.test(last[1]!);
+    if (!hasCurrencyOrDecimal && name.split(' ').length < 2) continue;
+
     out.push({ rawText: rawLine.trim(), productName: name, price });
   }
   return out;

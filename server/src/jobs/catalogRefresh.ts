@@ -49,25 +49,40 @@ export async function catalogRefresh(): Promise<JobResult> {
         ...offers.map((o) => ({ ...o, isOffer: true, offerEndsAt: o.offerEndsAt })),
       ];
 
+      // المطابقة أولاً، مع إزالة التكرار: إن طابق عنصران نفس المنتج
+      // (مطابقة ضبابية فضفاضة) يُعتمد الأعلى درجة فقط — يحفظ idempotency
+      const bestByKey = new Map<
+        string,
+        { item: (typeof all)[number]; productId: number; score: number }
+      >();
       for (const item of all) {
         const match = await matchProduct(item.rawName, storeId);
         if (!match) {
           unmatched++;
           continue;
         }
-        if (match.via === 'fuzzy' && match.score >= 0.8) {
-          await saveAlias(match.productId, storeId, item.rawName);
+        const key = `${match.productId}:${item.isOffer}`;
+        const prev = bestByKey.get(key);
+        if (!prev || match.score > prev.score) {
+          bestByKey.set(key, { item, productId: match.productId, score: match.score });
+        }
+      }
+
+      for (const { item, productId, score } of bestByKey.values()) {
+        if (score >= 0.8 && score < 1) {
+          await saveAlias(productId, storeId, item.rawName);
         }
 
         for (const branch of targetBranches) {
-          // الفرق: آخر سعر بنفس المصدر لنفس (منتج، فرع)
+          // الفرق: آخر سعر بنفس المصدر ونفس النوع (عرض/عادي) لنفس (منتج، فرع)
           const [latest] = await db
             .select()
             .from(schema.prices)
             .where(
               and(
-                eq(schema.prices.productId, match.productId),
+                eq(schema.prices.productId, productId),
                 eq(schema.prices.branchId, branch.id),
+                eq(schema.prices.isOffer, item.isOffer),
                 inArray(schema.prices.source, ['api', 'scrape']),
               ),
             )
@@ -89,7 +104,7 @@ export async function catalogRefresh(): Promise<JobResult> {
           }
 
           const result = await submitPrice({
-            productId: match.productId,
+            productId,
             branchId: branch.id,
             price: item.price,
             source: 'scrape',

@@ -73,9 +73,9 @@ const CHAIN_NOISE = [
 ];
 
 export function chainKey(placeName: string): string {
-  let s = normalizeArabic(placeName);
-  // اقطع كل ما بعد فاصل الفرع: "بنده - حي الروضه" → "بنده"
-  s = s.split(/\s+-\s+|\s+فرع\s+|\s+branch\s+/)[0]!.trim();
+  // اقطع لاحقة الفرع قبل التطبيع (التطبيع يزيل الشرطة): "بنده - حي الروضة" → "بنده"
+  const head = placeName.split(/\s+[-–—]\s+|\s+فرع\s+|\s+branch\s+/i)[0]!;
+  const s = normalizeArabic(head);
   const words = s.split(' ').filter((w) => !CHAIN_NOISE.includes(w));
   return (words.join(' ') || s).trim();
 }
