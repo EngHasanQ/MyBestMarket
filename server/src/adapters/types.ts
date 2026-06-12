@@ -6,6 +6,8 @@ export interface RawProduct {
   barcode?: string | null;
   price: number;
   imageUrl?: string | null;
+  // رابط صفحة المنتج في موقع المتجر — إثبات المصدر المعروض للمستخدم
+  productUrl?: string | null;
   // أساس السعر: مواقع التوصيل غالباً أعلى من الرف (القسم 14.2)
   basis: 'shelf' | 'online' | 'unknown';
 }

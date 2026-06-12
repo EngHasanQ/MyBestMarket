@@ -83,9 +83,11 @@ export default function SelectCity() {
         />
       ) : (
         <>
-          {/* اختيار يدوي من قائمة منسدلة */}
+          {/* القائمة المنسدلة الرئيسة: كل مدن المملكة */}
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700">المدينة</span>
+            <span className="mb-1 block text-sm font-medium text-gray-700">
+              المدينة ({cities.length} مدينة)
+            </span>
             <select
               data-testid="city-select"
               className={inputClass}
@@ -106,19 +108,21 @@ export default function SelectCity() {
           </button>
           {geoError && <p className="mt-1 text-xs text-amber">{geoError}</p>}
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {cities.map((c) => (
+          {/* اختيار سريع لأكبر المدن */}
+          <p className="mt-5 text-xs font-medium text-gray-400">اختيار سريع</p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {cities.slice(0, 6).map((c) => (
               <button
                 key={c.id}
                 data-testid="city-card"
                 onClick={() => setSelected(c.id)}
-                className={`rounded-2xl border-2 p-4 text-center transition-colors ${
+                className={`rounded-2xl border-2 px-2 py-3 text-center text-sm transition-colors ${
                   selected === c.id
                     ? 'border-primary bg-primary-light font-bold text-primary'
                     : 'border-gray-200 bg-white text-gray-700'
                 }`}
               >
-                <span className="mb-1 block text-2xl">🕌</span>
+                <span className="mb-1 block text-xl">🕌</span>
                 {c.nameAr}
               </button>
             ))}

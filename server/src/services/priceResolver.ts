@@ -26,12 +26,16 @@ export interface ResolvedPrice {
   stale: boolean;
   estimated: boolean; // سعر إلكتروني معاير — يُعرض بوسم "تقديري"
   freshnessLabel: string;
+  sourceUrl: string | null;
+  proofImageUrl: string | null;
 }
 
 interface PriceRow extends PriceLike {
   id: number;
   branchId: number;
   price: number;
+  sourceUrl?: string | null;
+  proofImageUrl?: string | null;
 }
 
 /**
@@ -109,6 +113,8 @@ export async function resolveProductPrices(
       isOffer: r.isOffer,
       offerEndsAt: r.offerEndsAt,
       lastVerifiedAt: r.lastVerifiedAt,
+      sourceUrl: r.sourceUrl,
+      proofImageUrl: r.proofImageUrl,
     });
     byBranch.set(r.branchId, list);
   }
@@ -140,6 +146,8 @@ export async function resolveProductPrices(
       stale: isStale(chosen, now),
       estimated,
       freshnessLabel: freshnessLabel(chosen.lastVerifiedAt, now),
+      sourceUrl: chosen.sourceUrl ?? null,
+      proofImageUrl: chosen.proofImageUrl ?? null,
     });
   }
   return out;
@@ -160,6 +168,9 @@ export interface SubmitPriceInput {
   offerEndsAt?: Date | null;
   reportedBy?: number | null;
   confidence?: number; // تجاوز اختياري
+  // إثبات المصدر (قسم 2.4): رابط صفحة المتجر + صورة الدليل (مجلة/فاتورة)
+  sourceUrl?: string | null;
+  proofImageUrl?: string | null;
 }
 
 export type SubmitPriceResult =
@@ -223,6 +234,8 @@ export async function submitPrice(input: SubmitPriceInput): Promise<SubmitPriceR
       offerEndsAt: input.offerEndsAt ?? null,
       confidence,
       reportedBy: input.reportedBy ?? null,
+      sourceUrl: input.sourceUrl ?? null,
+      proofImageUrl: input.proofImageUrl ?? null,
     })
     .returning({ id: schema.prices.id });
 

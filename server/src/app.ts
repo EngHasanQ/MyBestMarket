@@ -10,6 +10,7 @@ import { pinoHttp } from 'pino-http';
 import { config } from './config.js';
 import { logger } from './logger.js';
 import { errorHandler } from './middleware/error.js';
+import { UPLOADS_DIR } from './uploads.js';
 import { authRouter } from './routes/auth.js';
 import { catalogRouter } from './routes/catalog.js';
 import { listsRouter } from './routes/lists.js';
@@ -48,6 +49,9 @@ export function createApp() {
   });
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+
+  // صور الأدلة المرفوعة (مجلات/فواتير) — تُعرض بجانب الأسعار الموثقة
+  app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '30d', immutable: true }));
   app.use('/api/auth', authLimiter, authRouter);
   app.use('/api', apiLimiter, catalogRouter);
   app.use('/api/lists', apiLimiter, listsRouter);

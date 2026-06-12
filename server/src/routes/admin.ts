@@ -94,6 +94,30 @@ adminRouter.post('/products', async (req, res, next) => {
   }
 });
 
+/** تحديث صورة/بيانات منتج (مثلاً ربط صورة رسمية من موقع المتجر) */
+adminRouter.patch('/products/:id', async (req, res, next) => {
+  try {
+    const body = z
+      .object({
+        imageUrl: z.string().url().nullable().optional(),
+        nameAr: z.string().min(1).optional(),
+        categoryId: z.number().int().optional(),
+      })
+      .parse(req.body);
+    const patch: Record<string, unknown> = { ...body };
+    if (body.nameAr) patch.normalizedName = normalizeArabic(body.nameAr);
+    const [row] = await db
+      .update(schema.products)
+      .set(patch)
+      .where(eq(schema.products.id, Number(req.params.id)))
+      .returning();
+    if (!row) return res.status(404).json({ error: 'المنتج غير موجود' });
+    res.json(row);
+  } catch (err) {
+    next(err);
+  }
+});
+
 const manualPriceSchema = z.object({
   productId: z.number().int(),
   branchId: z.number().int(),
@@ -128,9 +152,15 @@ adminRouter.post('/flyers/upload', upload.single('image'), async (req, res, next
   try {
     const meta = flyerMetaSchema.parse(req.body);
     let text = meta.ocrText ?? null;
-    if (!text && req.file) {
-      const { ocrImage } = await import('../services/ocr/engine.js');
-      text = await ocrImage(req.file.buffer);
+    let flyerImageUrl: string | null = null;
+    if (req.file) {
+      // صفحة المجلة تُحفظ كدليل سعر يراه المستخدم بعد الاعتماد
+      const { saveUpload } = await import('../uploads.js');
+      flyerImageUrl = saveUpload(req.file.buffer, req.file.originalname);
+      if (!text) {
+        const { ocrImage } = await import('../services/ocr/engine.js');
+        text = await ocrImage(req.file.buffer);
+      }
     }
     if (!text) return res.status(400).json({ error: 'أرفق صورة المجلة أو نص OCR' });
 
@@ -152,6 +182,7 @@ adminRouter.post('/flyers/upload', upload.single('image'), async (req, res, next
           parsedProductName: c.productName,
           parsedPrice: String(c.price),
           matchedProductId: match?.productId ?? null,
+          flyerImageUrl,
           offerEndsAt: meta.offerEndsAt ?? null,
           status: 'pending',
         })
@@ -216,6 +247,18 @@ adminRouter.post('/review-queue/:id/approve', async (req, res, next) => {
     if (price == null) return res.status(422).json({ error: 'حدد السعر' });
 
     const isFlyer = item.kind === 'flyer';
+    // إثبات المصدر: صورة صفحة المجلة + رابط صفحة العروض في موقع السلسلة
+    const branch = await db.query.storeBranches.findFirst({
+      where: eq(schema.storeBranches.id, item.branchId),
+    });
+    const flyerProfile = branch
+      ? await db.query.storeSourceProfiles.findFirst({
+          where: and(
+            eq(schema.storeSourceProfiles.storeId, branch.storeId),
+            eq(schema.storeSourceProfiles.sourceType, 'flyer'),
+          ),
+        })
+      : null;
     const [row] = await db
       .insert(schema.prices)
       .values({
@@ -228,6 +271,8 @@ adminRouter.post('/review-queue/:id/approve', async (req, res, next) => {
         offerEndsAt: body.offerEndsAt ?? item.offerEndsAt ?? null,
         confidence: baseConfidence(isFlyer ? 'flyer_ocr_verified' : 'user_report'),
         reportedBy: req.user!.id,
+        proofImageUrl: item.flyerImageUrl,
+        sourceUrl: flyerProfile?.endpointOrUrl ?? null,
       })
       .returning({ id: schema.prices.id });
 

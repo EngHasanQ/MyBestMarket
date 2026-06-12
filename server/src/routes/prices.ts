@@ -57,9 +57,15 @@ pricesRouter.post('/receipt', upload.single('image'), async (req, res, next) => 
     });
 
     let text = body.ocrText ?? null;
-    if (!text && req.file) {
-      const { ocrImage } = await import('../services/ocr/engine.js');
-      text = await ocrImage(req.file.buffer);
+    let proofImageUrl: string | null = null;
+    if (req.file) {
+      // صورة الفاتورة تُحفظ كدليل يُعرض بجانب كل سعر موثق منها
+      const { saveUpload } = await import('../uploads.js');
+      proofImageUrl = saveUpload(req.file.buffer, req.file.originalname);
+      if (!text) {
+        const { ocrImage } = await import('../services/ocr/engine.js');
+        text = await ocrImage(req.file.buffer);
+      }
     }
     if (!text) return res.status(400).json({ error: 'أرفق صورة الفاتورة أو نصها' });
 
@@ -97,6 +103,7 @@ pricesRouter.post('/receipt', upload.single('image'), async (req, res, next) => 
           source: 'receipt_ocr',
           basis: 'shelf',
           reportedBy: req.user!.id,
+          proofImageUrl,
         });
         if (match.via === 'fuzzy') await saveAlias(match.productId, branch.storeId, line.productName);
         matched.push({

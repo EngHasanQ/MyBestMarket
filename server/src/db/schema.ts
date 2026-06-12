@@ -141,6 +141,10 @@ export const prices = pgTable(
     basis: priceBasis('basis').notNull().default('shelf'),
     confidence: integer('confidence').notNull(),
     reportedBy: integer('reported_by').references(() => users.id),
+    // إثبات المصدر: رابط صفحة المنتج في موقع المتجر + صورة الدليل
+    // (صفحة المجلة أو الفاتورة التي جاء منها السعر) — تُعرض للمستخدم
+    sourceUrl: text('source_url'),
+    proofImageUrl: text('proof_image_url'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }).notNull().defaultNow(),
   },

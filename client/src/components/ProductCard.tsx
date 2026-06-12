@@ -29,17 +29,25 @@ export function ProductCard({ product }: { product: Product }) {
       className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
     >
       <Link to={`/product/${product.id}`} className="flex-1">
-        <div className="mb-1 flex h-14 items-center justify-center text-3xl">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt="" className="h-14 object-contain" />
-          ) : (
-            '🛒'
-          )}
-        </div>
+        {product.imageUrl ? (
+          <div className="mb-1 flex h-16 items-center justify-center">
+            <img src={product.imageUrl} alt={product.nameAr} className="h-16 object-contain" loading="lazy" />
+          </div>
+        ) : (
+          // لا صورة رسمية بعد — بلاطة بأيقونة التصنيف الدقيق بدل صورة عامة
+          <div className="mb-1 flex h-16 items-center justify-center rounded-xl bg-primary-light/40 text-4xl">
+            {product.categoryIcon ?? '🛍️'}
+          </div>
+        )}
         <p className="line-clamp-2 text-sm font-medium leading-5 text-gray-900">{product.nameAr}</p>
         <p className="mt-0.5 text-[11px] text-gray-400">
           {[product.brand, sizeLabel(product.sizeValue, product.sizeUnit)].filter(Boolean).join(' · ')}
         </p>
+        {product.categoryName && (
+          <span className="mt-1 inline-block rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
+            {product.categoryIcon} {product.categoryName}
+          </span>
+        )}
       </Link>
       {product.cheapest ? (
         <div className="flex flex-wrap items-center gap-1.5">

@@ -1,7 +1,7 @@
 // تحديث الكتالوجات اليومي بالفروقات فقط (القسم 15: catalog-refresh)
 // سعر لم يتغير → تحديث last_verified_at فقط، صفر صفوف جديدة (idempotent)
 
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from '../db/index.js';
 import { getAdapters } from '../adapters/registry.js';
 import { matchProduct, saveAlias } from '../services/productMatcher.js';
@@ -39,6 +39,11 @@ export async function catalogRefresh(): Promise<JobResult> {
 
       const catalog = await adapter.fetchCatalog(cityCodes[0]?.code ?? '');
       const offers = await adapter.fetchOffers(cityCodes[0]?.code ?? '');
+      // رابط مصدر السلسلة (كتالوج إلكتروني/API) — يُختم به كل سعر مكشوط
+      const profile = await db.query.storeSourceProfiles.findFirst({
+        where: eq(schema.storeSourceProfiles.storeId, storeId),
+      });
+      const chainSourceUrl = profile?.endpointOrUrl ?? null;
       itemsIn += catalog.length + offers.length;
       let written = 0;
       let skippedUnchanged = 0;
@@ -71,6 +76,14 @@ export async function catalogRefresh(): Promise<JobResult> {
       for (const { item, productId, score } of bestByKey.values()) {
         if (score >= 0.8 && score < 1) {
           await saveAlias(productId, storeId, item.rawName);
+        }
+
+        // التقط صورة المنتج من مصدر المتجر إذا لم تكن لدينا صورة بعد
+        if (item.imageUrl) {
+          await db
+            .update(schema.products)
+            .set({ imageUrl: item.imageUrl })
+            .where(and(eq(schema.products.id, productId), isNull(schema.products.imageUrl)));
         }
 
         for (const branch of targetBranches) {
@@ -111,6 +124,7 @@ export async function catalogRefresh(): Promise<JobResult> {
             basis: item.basis,
             isOffer: item.isOffer,
             offerEndsAt: item.offerEndsAt,
+            sourceUrl: item.productUrl ?? chainSourceUrl,
           });
           if (result.status === 'published') written++;
         }

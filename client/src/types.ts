@@ -45,6 +45,8 @@ export interface Product {
   sizeUnit: string | null;
   imageUrl: string | null;
   categoryId: number;
+  categoryName?: string | null;
+  categoryIcon?: string | null;
   cheapest: CheapestPrice | null;
 }
 
@@ -67,6 +69,9 @@ export interface Comparison {
   source: string;
   basis: 'shelf' | 'online' | 'unknown';
   freshnessLabel: string;
+  // إثبات المصدر: رابط صفحة المتجر + صورة الدليل (مجلة/فاتورة)
+  sourceUrl: string | null;
+  proofImageUrl: string | null;
   branch: ComparisonBranch;
 }
 

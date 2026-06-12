@@ -6,16 +6,19 @@ import { db, schema } from './db/index.js';
 import { registerAllJobs, scheduleJobs } from './jobs/index.js';
 
 /**
- * بذر تلقائي عند الإقلاع بقاعدة فارغة (لا مدن = التطبيق غير قابل للاستخدام).
- * يعمل بلا مسح إطلاقاً: الجداول غير الفارغة (مثل users المسجلين) لا تُمس.
- * يُعطَّل بـ BOOTSTRAP_SEED=false.
+ * تهيئة تلقائية عند الإقلاع — بلا مسح إطلاقاً (الحسابات المسجلة لا تُمس):
+ *  - upsert كامل مدن المملكة + أيقونات التصنيفات (يلتقط الإضافات الجديدة)
+ *  - بذر البيانات التجريبية كاملة فقط إذا كان كتالوج المنتجات فارغاً
+ * يُعطَّل بالكامل بـ BOOTSTRAP_SEED=false.
  */
 async function bootstrapSeedIfEmpty() {
   if (process.env.BOOTSTRAP_SEED === 'false') return;
-  const anyCity = await db.select().from(schema.cities).limit(1);
-  if (anyCity.length > 0) return;
-  logger.warn('قاعدة بيانات فارغة — تشغيل البذر التلقائي (بلا مسح)');
-  const { runSeed } = await import('./seed/index.js');
+  const { runSeed, ensureCities, ensureCategoryIcons } = await import('./seed/index.js');
+  await ensureCities();
+  await ensureCategoryIcons();
+  const anyProduct = await db.select().from(schema.products).limit(1);
+  if (anyProduct.length > 0) return;
+  logger.warn('كتالوج فارغ — تشغيل البذر التلقائي (بلا مسح)');
   const counts = await runSeed({ wipe: false });
   logger.info(counts, 'اكتمل البذر التلقائي');
 }

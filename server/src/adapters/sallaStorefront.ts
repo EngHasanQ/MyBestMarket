@@ -35,6 +35,7 @@ export function createSallaAdapter(storeSlug: string, baseUrl: string): StoreAda
             barcode: it.sku ?? null,
             price,
             imageUrl: it.image?.url ?? null,
+            productUrl: it.urls?.customer ?? it.url ?? null,
             basis: 'online',
           });
         }

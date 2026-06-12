@@ -65,15 +65,51 @@ export interface SeedCounts {
   purchases: number;
 }
 
+/**
+ * upsert مدن المملكة بالكامل حسب code — يضيف المدن الجديدة لقاعدة موجودة
+ * دون المساس بالقائمة. يُستدعى عند كل إقلاع للخادم.
+ */
+export async function ensureCities() {
+  await db
+    .insert(schema.cities)
+    .values(
+      CITIES.map((c) => ({
+        nameAr: c.nameAr,
+        code: c.code,
+        lat: c.lat,
+        lng: c.lng,
+        minLat: c.minLat ?? null,
+        minLng: c.minLng ?? null,
+        maxLat: c.maxLat ?? null,
+        maxLng: c.maxLng ?? null,
+      })),
+    )
+    .onConflictDoNothing({ target: schema.cities.code });
+  return db.select().from(schema.cities);
+}
+
+/** تعبئة أيقونات التصنيفات الفرعية للقواعد المنشورة قبل إضافتها */
+export async function ensureCategoryIcons() {
+  const iconBySlug = new Map<string, string>();
+  for (const main of CATEGORIES) {
+    iconBySlug.set(main.slug, main.icon);
+    for (const s of main.subs) iconBySlug.set(s.slug, s.icon);
+  }
+  const rows = await db.select().from(schema.categories);
+  for (const row of rows) {
+    const icon = iconBySlug.get(row.slug);
+    if (icon && row.icon !== icon) {
+      await db.update(schema.categories).set({ icon }).where(eq(schema.categories.id, row.id));
+    }
+  }
+}
+
 export async function runSeed(opts: { wipe?: boolean } = {}): Promise<SeedCounts> {
   const rand = rng(20260612);
   if (opts.wipe ?? true) await wipe();
 
-  // 1) مدن — تُدرَج فقط إن كان الجدول فارغاً
-  let cityRows = await db.select().from(schema.cities);
-  if (cityRows.length === 0) {
-    cityRows = await db.insert(schema.cities).values(CITIES).returning();
-  }
+  // 1) مدن — upsert كامل قائمة المملكة
+  const cityRows = await ensureCities();
   const cityByCode = new Map(cityRows.map((c) => [c.code, c]));
 
   // 2) متاجر وفروع
@@ -117,6 +153,7 @@ export async function runSeed(opts: { wipe?: boolean } = {}): Promise<SeedCounts
             parentId: m!.id,
             nameAr: s.nameAr,
             slug: s.slug,
+            icon: s.icon,
             sortOrder: j,
           })),
         )

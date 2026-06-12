@@ -65,22 +65,28 @@ catalogRouter.get('/products', async (req, res, next) => {
     }
 
     const rows = await db
-      .select()
+      .select({
+        product: schema.products,
+        categoryName: schema.categories.nameAr,
+        categoryIcon: schema.categories.icon,
+        categorySort: schema.categories.sortOrder,
+      })
       .from(schema.products)
+      .innerJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
       .where(filters.length ? and(...filters) : undefined)
-      .orderBy(asc(schema.products.nameAr))
+      .orderBy(asc(schema.categories.sortOrder), asc(schema.products.nameAr))
       .limit(query.limit)
       .offset(query.offset);
 
     // أرخص سعر معروض لكل منتج في مدينة المستخدم (مع شارة الحداثة)
     const withPrices = await Promise.all(
-      rows.map(async (p) => {
+      rows.map(async ({ product: p, categoryName, categoryIcon }) => {
         const resolved = await resolveProductPrices(p.id, query.cityId);
         const prices = [...resolved.values()].filter((r) => !r.stale);
         const cheapest =
           (prices.length ? prices : [...resolved.values()]).sort((a, b) => a.price - b.price)[0] ??
           null;
-        return { ...p, cheapest };
+        return { ...p, categoryName, categoryIcon, cheapest };
       }),
     );
     res.json(withPrices);

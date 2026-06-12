@@ -80,12 +80,32 @@ export default function ProductsPage() {
       ) : products.length === 0 ? (
         <EmptyState icon="🔍" text={q ? `لا نتائج لـ "${q}"` : 'لا منتجات في هذا القسم بعد'} />
       ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 pb-4">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
+        // تقسيم دقيق: المنتجات مجمعة حسب تصنيفها الفرعي
+        <div className="flex flex-col gap-4 px-4 pb-4">
+          {groupByCategory(products).map(([group, items]) => (
+            <section key={group}>
+              <h2 className="mb-2 text-sm font-bold text-gray-500">
+                {items[0]?.categoryIcon} {group}
+                <span className="mr-1 font-normal text-gray-400">({items.length})</span>
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {items.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
     </div>
   );
+}
+
+function groupByCategory(products: Product[]): Array<[string, Product[]]> {
+  const groups = new Map<string, Product[]>();
+  for (const p of products) {
+    const key = p.categoryName ?? 'أخرى';
+    groups.set(key, [...(groups.get(key) ?? []), p]);
+  }
+  return [...groups.entries()];
 }
