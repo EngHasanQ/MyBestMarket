@@ -1,0 +1,12 @@
+[
+  { "placeId": "fx_murshidi_1", "name": "أسواق المرشدي - العزيزية", "lat": 21.4063, "lng": 39.8771, "types": ["supermarket", "grocery_store"], "website": "https://almurshidi-market.example.sa", "phone": "0125551111", "rating": 4.2, "userRatingsTotal": 1850 },
+  { "placeId": "fx_murshidi_2", "name": "أسواق المرشدي - الششة", "lat": 21.4361, "lng": 39.8689, "types": ["supermarket"], "website": "https://almurshidi-market.example.sa", "phone": "0125552222", "rating": 4.0, "userRatingsTotal": 920 },
+  { "placeId": "fx_murshidi_3", "name": "اسواق المرشدى فرع العوالي", "lat": 21.3705, "lng": 39.8252, "types": ["supermarket"], "website": "https://almurshidi-market.example.sa", "rating": 4.1, "userRatingsTotal": 640 },
+  { "placeId": "fx_alnoor", "name": "بقالة النور", "lat": 21.4012, "lng": 39.8233, "types": ["convenience_store"], "website": null, "rating": 4.4, "userRatingsTotal": 85 },
+  { "placeId": "fx_alfajr", "name": "تموينات الفجر", "lat": 21.4441, "lng": 39.8512, "types": ["grocery_store"], "website": null, "rating": 4.3, "userRatingsTotal": 120 },
+  { "placeId": "fx_zahra_1", "name": "أسواق الزهراء - النسيم", "lat": 21.4633, "lng": 39.8661, "types": ["supermarket"], "website": "https://zahra-stores.example.sa", "rating": 3.9, "userRatingsTotal": 410 },
+  { "placeId": "fx_zahra_2", "name": "أسواق الزهراء - بطحاء قريش", "lat": 21.3741, "lng": 39.8633, "types": ["supermarket"], "website": "https://zahra-stores.example.sa", "rating": 4.0, "userRatingsTotal": 380 },
+  { "placeId": "fx_kakiya_plast", "name": "البيت البلاستيكي للمنظفات", "lat": 21.3915, "lng": 39.8077, "types": ["home_goods_store"], "website": null, "rating": 4.5, "userRatingsTotal": 210 },
+  { "placeId": "fx_taqwa", "name": "هايبر التقوى", "lat": 21.4288, "lng": 39.8419, "types": ["supermarket"], "website": "https://altaqwa.example.sa", "rating": 4.1, "userRatingsTotal": 760 },
+  { "placeId": "fx_baraka_dup", "name": "بقالة البركة - الكعكية", "lat": 21.3902, "lng": 39.8051, "types": ["convenience_store"], "website": null, "rating": 4.2, "userRatingsTotal": 95 }
+]

@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #faf9f6;
+  --color-primary: #1b7a43;
+  --color-primary-dark: #135c32;
+  --color-primary-light: #e6f3ec;
+  --color-amber: #b45309;
+  --color-amber-light: #fef3c7;
+  --font-sans: "Tajawal", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: var(--color-cream);
+  color: #1f2937;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+.price-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
