@@ -255,9 +255,14 @@ async function main() {
   )!;
   const demoProducts = productRows.filter((_, i) => i % 11 === 0).slice(0, 15);
   const purchaseValues: (typeof schema.purchases.$inferInsert)[] = [];
+  // محاذاة التاريخ مع يوم التسوق القادم: آخر شراء قبل 30 يوماً من يوم التسوق
+  // القادم بالضبط حتى يقع الاستحقاق داخل نافذة التوليد أياً كان تاريخ التشغيل
+  const now = new Date();
+  const nextShopping = new Date(now.getFullYear(), now.getMonth(), 4);
+  if (nextShopping.getTime() < now.getTime()) nextShopping.setMonth(nextShopping.getMonth() + 1);
   for (const [j, p] of demoProducts.entries()) {
     const basePrice = PRODUCTS[productRows.indexOf(p)]![5];
-    for (const monthsBack of [3, 2, 1]) {
+    for (const cyclesBack of [3, 2, 1]) {
       const jitter = Math.floor(rand() * 5) - 2;
       purchaseValues.push({
         userId: demo!.id,
@@ -265,7 +270,7 @@ async function main() {
         branchId: j % 2 === 0 ? pandaMakkah.id : othaimMakkah.id,
         quantity: String(1 + (j % 3 === 0 ? 1 : 0)),
         price: String(round2(basePrice * (0.95 + rand() * 0.1))),
-        purchasedAt: daysAgo(monthsBack * 30 + jitter),
+        purchasedAt: new Date(nextShopping.getTime() - (cyclesBack * 30 + jitter) * DAY),
       });
     }
   }
