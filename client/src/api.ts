@@ -12,6 +12,7 @@ import type {
   JobRun,
   ListDetail,
   PriceAlert,
+  PriceEvidence,
   Product,
   ProductDetail,
   ReceiptResult,
@@ -126,6 +127,10 @@ export const api = {
     rawName: string;
     price: number;
   }) => post<unknown>('/receipt/confirm-line', body),
+
+  // ---------- إثبات السعر وطلبات المنتجات ----------
+  priceEvidence: (priceId: number) => get<PriceEvidence[]>(`/prices/${priceId}/evidence`),
+  requestProduct: (query: string) => post<unknown>('/product-requests', { query }),
 
   // ---------- الإشعارات والتنبيهات ----------
   notifications: () => get<AppNotification[]>('/notifications'),

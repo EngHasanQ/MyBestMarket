@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Scissors, ShoppingCart, Store, X } from 'lucide-react';
 import { api } from '../api';
 import type { ListDetail } from '../types';
 import { priceLabel } from '../lib/format';
-import { Button, PageTitle, Spinner } from '../components/ui';
+import { Button, PageTitle, SkeletonRows } from '../components/ui';
 import { cacheList } from '../lib/offline';
 
 export default function ListPage() {
@@ -35,7 +36,13 @@ export default function ListPage() {
     return [...byStore.entries()];
   }, [list]);
 
-  if (!list) return <Spinner />;
+  if (!list) {
+    return (
+      <div className="pt-4">
+        <SkeletonRows count={6} height={56} />
+      </div>
+    );
+  }
 
   const expectedTotal = list.items.reduce(
     (s, i) => s + (i.expectedPrice ? Number(i.expectedPrice) * Number(i.quantity) : 0),
@@ -57,16 +64,26 @@ export default function ListPage() {
       <PageTitle>{list.title}</PageTitle>
 
       {list.optimization?.bestSingleStore && (
-        <div data-testid="optimization-summary" className="mx-4 mb-3 rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-700">
-            🏪 شراء كل شيء من <b>{list.optimization.bestSingleStore.nameAr}</b>:{' '}
-            <span className="price-mono font-bold">{priceLabel(list.optimization.bestSingleStore.total)}</span>
+        <div data-testid="optimization-summary" className="card mx-4 mb-3 p-4">
+          <p className="flex items-center gap-2 text-sm text-ink">
+            <Store size={16} strokeWidth={1.8} className="shrink-0 text-ink-2" />
+            <span>
+              كل شيء من <b>{list.optimization.bestSingleStore.nameAr}</b>:{' '}
+              <span className="price-mono font-semibold">
+                {priceLabel(list.optimization.bestSingleStore.total)}
+              </span>
+            </span>
           </p>
           {list.optimization.optimalSplit && list.optimization.optimalSplit.savings > 0 && (
-            <p className="mt-2 text-sm font-medium text-primary">
-              ✂️ التقسيم الأمثل بين {list.optimization.optimalSplit.stores.length} متاجر:{' '}
-              <span className="price-mono font-bold">{priceLabel(list.optimization.optimalSplit.total)}</span>{' '}
-              (توفير {priceLabel(list.optimization.optimalSplit.savings)})
+            <p className="mt-2 flex items-center gap-2 text-sm font-medium text-primary-dark">
+              <Scissors size={16} strokeWidth={1.8} className="shrink-0" />
+              <span>
+                التقسيم الأمثل بين {list.optimization.optimalSplit.stores.length} متاجر:{' '}
+                <span className="price-mono font-semibold">
+                  {priceLabel(list.optimization.optimalSplit.total)}
+                </span>{' '}
+                (توفير {priceLabel(list.optimization.optimalSplit.savings)})
+              </span>
             </p>
           )}
         </div>
@@ -74,26 +91,26 @@ export default function ListPage() {
 
       {groups.map(([store, items]) => (
         <section key={store} className="mb-3 px-4">
-          <h2 className="mb-1.5 text-sm font-bold text-gray-500">{store}</h2>
+          <h2 className="t-caption mb-1.5 font-bold">{store}</h2>
           <div className="flex flex-col gap-1.5">
             {items.map((item) => (
-              <div
-                key={item.id}
-                data-testid="list-item"
-                className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-3 py-2.5"
-              >
+              <div key={item.id} data-testid="list-item" className="card flex items-center px-3 py-2.5">
                 <div className="flex-1">
-                  <p className={`text-sm ${item.isPurchased ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                  <p className={`text-sm ${item.isPurchased ? 'text-gray-400 line-through' : 'text-ink'}`}>
                     {item.productName}
                   </p>
-                  <p className="text-[11px] text-gray-400">
+                  <p className="t-caption">
                     {Number(item.quantity)} × {priceLabel(item.expectedPrice)}
                     {item.branchName ? ` — ${item.branchName}` : ''}
                   </p>
                 </div>
                 {list.status !== 'completed' && (
-                  <button onClick={() => removeItem(item.id)} className="px-2 text-gray-300">
-                    ✕
+                  <button
+                    onClick={() => void removeItem(item.id)}
+                    aria-label="حذف"
+                    className="flex h-11 w-11 items-center justify-center text-gray-300 active:text-red-400"
+                  >
+                    <X size={18} strokeWidth={2} />
                   </button>
                 )}
               </div>
@@ -102,15 +119,15 @@ export default function ListPage() {
         </section>
       ))}
 
-      <div className="mx-4 mt-2 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-        <span className="text-sm text-gray-500">الإجمالي المتوقع</span>
-        <span className="price-mono font-bold text-gray-900">{priceLabel(expectedTotal)}</span>
+      <div className="mx-4 mt-2 flex items-center justify-between rounded-(--radius-card) bg-gray-500/5 px-4 py-3">
+        <span className="text-sm text-ink-2">الإجمالي المتوقع</span>
+        <span className="price-mono font-semibold text-ink">{priceLabel(expectedTotal)}</span>
       </div>
 
       {list.status !== 'completed' && list.items.length > 0 && (
         <div className="px-4 pt-4">
           <Button onClick={startShopping} testId="start-shopping" full>
-            🛒 ابدأ التسوق
+            <ShoppingCart size={18} strokeWidth={2} /> ابدأ التسوق
           </Button>
         </div>
       )}

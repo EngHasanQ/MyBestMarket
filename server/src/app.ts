@@ -38,14 +38,14 @@ export function createApp() {
     limit: 600,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => process.env.NODE_ENV === 'test',
+    skip: () => process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === '1',
   });
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 30,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => process.env.NODE_ENV === 'test',
+    skip: () => process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === '1',
   });
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));

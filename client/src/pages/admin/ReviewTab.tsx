@@ -1,6 +1,7 @@
 // قائمة المراجعة: اعتماد/تعديل/رفض مستخرجات OCR — ضمان دقة الـ99% (القسم 2.2)
 
 import { useEffect, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { api } from '../../api';
 import type { ReviewItem } from '../../types';
 import { priceLabel } from '../../lib/format';
@@ -28,7 +29,7 @@ export function ReviewTab() {
   };
 
   if (!items) return <Spinner />;
-  if (items.length === 0) return <EmptyState icon="✅" text="قائمة المراجعة فارغة — أحسنت" />;
+  if (items.length === 0) return <EmptyState icon={CheckCircle2} text="قائمة المراجعة فارغة — أحسنت" />;
 
   return (
     <div className="flex flex-col gap-3">

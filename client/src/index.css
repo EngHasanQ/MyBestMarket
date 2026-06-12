@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
+/* رموز التصميم (سبرنت v2 — جزء 3.1): شبكة 4px، نظام ألوان هادئ */
 @theme {
-  --color-cream: #faf9f6;
+  --color-cream: #faf8f4;
+  --color-surface: #ffffff;
   --color-primary: #1b7a43;
   --color-primary-dark: #135c32;
-  --color-primary-light: #e6f3ec;
+  --color-primary-light: #e8f3ed;
   --color-amber: #b45309;
-  --color-amber-light: #fef3c7;
+  --color-amber-light: #fdf3e3;
+  --color-ink: #1f2937;
+  --color-ink-2: #6b7280;
   --font-sans: "Tajawal", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-btn: 12px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 html {
@@ -17,16 +26,63 @@ html {
 
 body {
   background-color: var(--color-cream);
-  color: #1f2937;
+  color: var(--color-ink);
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
+/* مقياس الخط (3.1): عنوان صفحة 22، قسم 17، بطاقة 15، نص 14، تعليق 12 */
+.t-page { font-size: 22px; font-weight: 700; line-height: 1.4; }
+.t-section { font-size: 17px; font-weight: 600; line-height: 1.4; }
+.t-card { font-size: 15px; font-weight: 500; line-height: 1.45; }
+.t-caption { font-size: 12px; color: var(--color-ink-2); line-height: 1.4; }
+
+/* الأسعار: أرقام غربية ثابتة العرض داخل RTL */
 .price-mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
   direction: ltr;
   unicode-bidi: embed;
+}
+
+/* بطاقة قياسية (3.1): حد 1px + ظل خفيف */
+.card {
+  background: var(--color-surface);
+  border: 1px solid rgba(0, 0, 0, 0.063);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* حالات الضغط على كل الأزرار (3.4) */
+button, a[role="button"] {
+  transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease;
+}
+button:active:not(:disabled), a[role="button"]:active {
+  transform: scale(0.98);
+}
+
+/* انتقال صفحات بسيط 150ms (3.4) */
+.page-enter {
+  animation: page-in 0.15s ease both;
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* وميض السكيلتون (3.3) */
+.skeleton {
+  background: linear-gradient(90deg, #eeeae3 25%, #f6f3ed 50%, #eeeae3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 input[type="number"]::-webkit-outer-spin-button,

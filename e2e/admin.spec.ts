@@ -22,7 +22,7 @@ test('مجلة → قائمة المراجعة → اعتماد → السعر �
   await expect(page.getByTestId('kpi-ratio')).toBeVisible();
 
   // رفع مجلة بنص OCR
-  await page.getByText('📰 رفع مجلة').click();
+  await page.getByRole('button', { name: 'رفع مجلة' }).click();
   const branchSelect = page.getByTestId('flyer-branch-select');
   await expect(branchSelect).toBeVisible();
   // انتظر تحميل الفروع ثم اختر فرع عثيم
@@ -41,7 +41,7 @@ test('مجلة → قائمة المراجعة → اعتماد → السعر �
   await expect(page.getByText(/استُخرج \d+ عنصراً/)).toBeVisible({ timeout: 30_000 });
 
   // قائمة المراجعة: اعتماد أول عنصر مُطابَق
-  await page.getByText('✅ المراجعة').click();
+  await page.getByRole('button', { name: 'المراجعة', exact: true }).click();
   await expect(page.getByTestId('review-row').first()).toBeVisible();
   const approvable = page
     .getByTestId('review-row')

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { ShoppingBasket } from 'lucide-react';
 import { Button, ErrorBox, Field, inputClass } from '../components/ui';
 
 export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
@@ -34,7 +35,11 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <div className="mb-8 text-center">
-        <div className="mb-2 text-5xl">🛒</div>
+        <div className="mb-3 flex justify-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary text-white">
+            <ShoppingBasket size={34} strokeWidth={1.8} />
+          </span>
+        </div>
         <h1 className="text-3xl font-extrabold text-primary">وفّر</h1>
         <p className="mt-1 text-sm text-gray-500">قارن أسعار البقالة في مدينتك ووفّر في كل تسوقة</p>
       </div>

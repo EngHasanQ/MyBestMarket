@@ -50,5 +50,5 @@ test('تسجيل جديد حتى الإضافة من أرخص متجر', async (
 
   // أضف من الأرخص (الصف الأول)
   await rows.first().getByTestId('add-from-branch').click();
-  await expect(rows.first().getByText('✓ أُضيف')).toBeVisible();
+  await expect(rows.first().getByText('أُضيف')).toBeVisible();
 });

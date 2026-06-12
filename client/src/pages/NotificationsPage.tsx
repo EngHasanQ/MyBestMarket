@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Bell, BellOff, Clock, Info, ShoppingCart, TrendingDown } from 'lucide-react';
 import { api } from '../api';
 import type { AppNotification } from '../types';
 import { relativeTime } from '../lib/format';
 import { EmptyState, PageTitle, Spinner } from '../components/ui';
 
-const icons: Record<string, string> = {
-  monthly_list: '🛒',
-  price_drop: '📉',
-  best_time: '⏰',
-  system: 'ℹ️',
-};
+const icons = {
+  monthly_list: ShoppingCart,
+  price_drop: TrendingDown,
+  best_time: Clock,
+  system: Info,
+} as const;
 
 export default function NotificationsPage() {
   const [items, setItems] = useState<AppNotification[] | null>(null);
@@ -31,18 +32,21 @@ export default function NotificationsPage() {
       {!items ? (
         <Spinner />
       ) : items.length === 0 ? (
-        <EmptyState icon="🔔" text="لا إشعارات بعد" />
+        <EmptyState icon={BellOff} text="لا إشعارات بعد" />
       ) : (
         <div className="flex flex-col gap-2 px-4">
           {items.map((n) => {
             const listId = (n.payload as { listId?: number } | null)?.listId;
+            const Icon = icons[n.type as keyof typeof icons] ?? Bell;
             const inner = (
               <div
                 className={`flex gap-3 rounded-2xl border p-3.5 ${
-                  n.isRead ? 'border-gray-100 bg-white' : 'border-primary-light bg-primary-light/30'
+                  n.isRead ? 'border-black/5 bg-surface' : 'border-primary/20 bg-primary-light/40'
                 }`}
               >
-                <span className="text-2xl">{icons[n.type] ?? '🔔'}</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-light text-primary">
+                  <Icon size={20} strokeWidth={1.8} />
+                </span>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-gray-900">{n.title}</p>
                   {n.body && <p className="mt-0.5 text-xs leading-5 text-gray-500">{n.body}</p>}

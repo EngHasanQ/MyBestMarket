@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowRight, Camera, Check, PartyPopper, Store } from 'lucide-react';
 import { api } from '../api';
 import type { FinishResult, ListDetail, ListItem } from '../types';
 import { priceLabel } from '../lib/format';
@@ -132,8 +133,10 @@ export default function ShoppingMode() {
   if (summary) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <div data-testid="savings-summary" className="w-full rounded-3xl bg-white p-6 shadow-sm">
-          <div className="text-5xl">🎉</div>
+        <div data-testid="savings-summary" className="card w-full rounded-3xl p-6">
+          <div className="flex justify-center text-primary">
+            <PartyPopper size={48} strokeWidth={1.4} />
+          </div>
           <h1 className="mt-3 text-xl font-extrabold text-gray-900">اكتمل التسوق!</h1>
           <p className="mt-1 text-sm text-gray-500">
             اشتريت {summary.purchasedCount} منتجاً
@@ -171,8 +174,8 @@ export default function ShoppingMode() {
   return (
     <div className="mx-auto min-h-screen max-w-md pb-36">
       <header className="sticky top-0 z-30 flex items-center justify-between bg-primary px-4 py-3 text-white">
-        <Link to={`/list/${listId}`} className="text-sm opacity-80">
-          → خروج
+        <Link to={`/list/${listId}`} className="flex min-h-11 items-center gap-1 text-sm opacity-90">
+          <ArrowRight size={16} strokeWidth={2} /> خروج
         </Link>
         <h1 className="font-bold">وضع التسوق</h1>
         <span className="text-sm opacity-80">
@@ -191,7 +194,9 @@ export default function ShoppingMode() {
 
       {groups.map(([group, items]) => (
         <section key={group} className="px-4 pt-4">
-          <h2 className="mb-2 text-sm font-bold text-gray-500">🏪 {group}</h2>
+          <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-gray-500">
+            <Store size={15} strokeWidth={1.8} /> {group}
+          </h2>
           <div className="flex flex-col gap-2">
             {items.map((item) => (
               <div
@@ -210,7 +215,7 @@ export default function ShoppingMode() {
                       item.isPurchased ? 'border-primary bg-primary text-white' : 'border-gray-300'
                     }`}
                   >
-                    {item.isPurchased ? '✓' : ''}
+                    {item.isPurchased ? <Check size={15} strokeWidth={3} /> : ''}
                   </span>
                   <span className="flex-1">
                     <span
@@ -254,9 +259,10 @@ export default function ShoppingMode() {
       <div className="px-4 pt-5">
         <Link
           to={`/receipt/${list.items.find((i) => i.chosenBranchId)?.chosenBranchId ?? ''}`}
-          className="block rounded-2xl border-2 border-dashed border-primary/40 p-3 text-center text-sm font-bold text-primary"
+          className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 p-3 text-center text-sm font-bold text-primary"
         >
-          📸 صوّر الفاتورة — وثّق كل الأسعار دفعة واحدة
+          <Camera size={18} strokeWidth={1.8} />
+          صوّر الفاتورة — وثّق كل الأسعار دفعة واحدة
         </Link>
       </div>
 

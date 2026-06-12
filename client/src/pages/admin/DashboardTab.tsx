@@ -41,7 +41,7 @@ export function DashboardTab() {
 
       {data.reviewQueue.overdue > 0 && (
         <div className="rounded-xl bg-amber-light p-3 text-sm font-bold text-amber">
-          ⚠️ {data.reviewQueue.overdue} عرض بانتظار المراجعة منذ أمس
+          {data.reviewQueue.overdue} عرض بانتظار المراجعة منذ أمس
         </div>
       )}
 

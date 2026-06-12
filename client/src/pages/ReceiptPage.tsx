@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Camera, CheckCircle2 } from 'lucide-react';
 import { api, fetchKnownBranches, type BranchOption } from '../api';
 import type { Product, ReceiptResult, ReceiptUnmatchedLine } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -38,7 +39,7 @@ export default function ReceiptPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-md pb-10">
-      <PageTitle>📸 توثيق فاتورة</PageTitle>
+      <PageTitle>توثيق فاتورة</PageTitle>
 
       {!result && (
         <div className="flex flex-col gap-4 px-4">
@@ -58,7 +59,7 @@ export default function ReceiptPage() {
             ))}
           </select>
           <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white text-gray-400">
-            <span className="text-3xl">📷</span>
+            <Camera size={32} strokeWidth={1.5} />
             <span className="text-sm">{file ? file.name : 'التقط صورة الفاتورة'}</span>
             <input
               data-testid="receipt-upload"
@@ -80,11 +81,12 @@ export default function ReceiptPage() {
       {result && (
         <div className="flex flex-col gap-4 px-4">
           <div className="rounded-2xl bg-primary-light p-4 text-center">
-            <p className="text-lg font-extrabold text-primary">
-              تم توثيق {result.matched.length + confirmed.size} سعراً ✓
+            <p className="flex items-center justify-center gap-2 text-lg font-extrabold text-primary">
+              <CheckCircle2 size={22} strokeWidth={2} />
+              تم توثيق {result.matched.length + confirmed.size} سعراً
             </p>
             {result.qrVerified === false && (
-              <p className="mt-1 text-xs text-amber">⚠️ تعذر التحقق من رمز ZATCA</p>
+              <p className="mt-1 text-xs text-amber">تعذر التحقق من رمز ZATCA</p>
             )}
           </div>
 

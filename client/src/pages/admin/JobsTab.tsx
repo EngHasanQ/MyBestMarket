@@ -60,7 +60,7 @@ export function JobsTab() {
                   disabled={running != null}
                   className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 disabled:opacity-50"
                 >
-                  {running === name ? '...' : '▶ شغّل الآن'}
+                  {running === name ? '...' : 'شغّل الآن'}
                 </button>
               </div>
             );

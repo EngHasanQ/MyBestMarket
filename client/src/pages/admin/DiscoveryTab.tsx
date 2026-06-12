@@ -78,14 +78,14 @@ export function DiscoveryTab() {
                   <span className="mr-2 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-500" dir="ltr">
                     {p.sourceType}
                   </span>
-                  {p.failureCount >= 3 && <span className="mr-1 text-xs text-red-500">⚠️ متعطل</span>}
+                  {p.failureCount >= 3 && <span className="mr-1 text-xs text-red-500">متعطل</span>}
                 </p>
                 <p className="text-[10px] text-gray-400" dir="ltr">
                   {p.endpointOrUrl ?? '—'}
                 </p>
               </div>
               {p.isConfirmed ? (
-                <span className="text-xs font-bold text-primary">✓ مؤكد</span>
+                <span className="text-xs font-bold text-primary">مؤكد</span>
               ) : (
                 <button
                   onClick={() => api.admin.confirmSource(p.id).then(load)}

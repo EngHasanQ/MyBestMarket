@@ -48,6 +48,7 @@ catalogRouter.get('/products', async (req, res, next) => {
       product: typeof schema.products.$inferSelect;
       categoryName: string;
       categoryIcon: string | null;
+      categorySlug: string;
     }>;
 
     if (query.q) {
@@ -78,6 +79,7 @@ catalogRouter.get('/products', async (req, res, next) => {
           product: schema.products,
           categoryName: schema.categories.nameAr,
           categoryIcon: schema.categories.icon,
+          categorySlug: schema.categories.slug,
         })
         .from(schema.products)
         .innerJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
@@ -89,13 +91,13 @@ catalogRouter.get('/products', async (req, res, next) => {
 
     // أرخص سعر معروض لكل منتج في مدينة المستخدم (مع شارة الحداثة)
     const withPrices = await Promise.all(
-      rows.map(async ({ product: p, categoryName, categoryIcon }) => {
+      rows.map(async ({ product: p, categoryName, categoryIcon, categorySlug }) => {
         const resolved = await resolveProductPrices(p.id, query.cityId);
         const prices = [...resolved.values()].filter((r) => !r.stale);
         const cheapest =
           (prices.length ? prices : [...resolved.values()]).sort((a, b) => a.price - b.price)[0] ??
           null;
-        return { ...p, categoryName, categoryIcon, cheapest };
+        return { ...p, categoryName, categoryIcon, categorySlug, cheapest };
       }),
     );
     res.json(withPrices);

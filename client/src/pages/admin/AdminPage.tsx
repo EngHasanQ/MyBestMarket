@@ -9,12 +9,12 @@ import { DiscoveryTab } from './DiscoveryTab';
 import { ManageTab } from './ManageTab';
 
 const tabs = [
-  { key: 'dashboard', label: '📊 الجودة' },
-  { key: 'review', label: '✅ المراجعة' },
-  { key: 'flyer', label: '📰 رفع مجلة' },
-  { key: 'jobs', label: '⚙️ الوظائف' },
-  { key: 'discovery', label: '🗺️ الاكتشاف' },
-  { key: 'manage', label: '🏪 إدارة' },
+  { key: 'dashboard', label: 'الجودة' },
+  { key: 'review', label: 'المراجعة' },
+  { key: 'flyer', label: 'رفع مجلة' },
+  { key: 'jobs', label: 'الوظائف' },
+  { key: 'discovery', label: 'الاكتشاف' },
+  { key: 'manage', label: 'إدارة' },
 ] as const;
 
 type TabKey = (typeof tabs)[number]['key'];
@@ -31,7 +31,7 @@ export default function AdminPage() {
       <header className="flex items-center justify-between bg-primary px-4 py-3 text-white">
         <h1 className="font-bold">لوحة إدارة وفّر</h1>
         <Link to="/" className="text-sm opacity-80">
-          → التطبيق
+          العودة للتطبيق
         </Link>
       </header>
 

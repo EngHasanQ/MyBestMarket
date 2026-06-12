@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { BottomNav } from './components/BottomNav';
-import { Spinner } from './components/ui';
+import { Spinner, ToastProvider } from './components/ui';
 
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const SelectCity = lazy(() => import('./pages/SelectCity'));
@@ -29,9 +29,13 @@ function Protected() {
 }
 
 function WithNav() {
+  const location = useLocation();
   return (
     <div className="mx-auto min-h-screen max-w-md pb-20">
-      <Outlet />
+      {/* انتقال 150ms بين الصفحات (3.4) */}
+      <div key={location.pathname} className="page-enter">
+        <Outlet />
+      </div>
       <BottomNav />
     </div>
   );
@@ -40,29 +44,31 @@ function WithNav() {
 export default function App() {
   return (
     <AuthProvider>
-      <Suspense fallback={<Spinner />}>
-        <Routes>
-          <Route path="/login" element={<AuthPage mode="login" />} />
-          <Route path="/register" element={<AuthPage mode="register" />} />
-          <Route element={<Protected />}>
-            <Route path="/select-city" element={<SelectCity />} />
-            <Route element={<WithNav />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<ProductsPage />} />
-              <Route path="/category/:id" element={<ProductsPage />} />
-              <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/lists" element={<ListsPage />} />
-              <Route path="/list/:id" element={<ListPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/account" element={<AccountPage />} />
+      <ToastProvider>
+        <Suspense fallback={<Spinner />}>
+          <Routes>
+            <Route path="/login" element={<AuthPage mode="login" />} />
+            <Route path="/register" element={<AuthPage mode="register" />} />
+            <Route element={<Protected />}>
+              <Route path="/select-city" element={<SelectCity />} />
+              <Route element={<WithNav />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/search" element={<ProductsPage />} />
+                <Route path="/category/:id" element={<ProductsPage />} />
+                <Route path="/product/:id" element={<ProductPage />} />
+                <Route path="/lists" element={<ListsPage />} />
+                <Route path="/list/:id" element={<ListPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/account" element={<AccountPage />} />
+              </Route>
+              <Route path="/shopping/:id" element={<ShoppingMode />} />
+              <Route path="/receipt/:branchId?" element={<ReceiptPage />} />
+              <Route path="/admin/*" element={<AdminPage />} />
             </Route>
-            <Route path="/shopping/:id" element={<ShoppingMode />} />
-            <Route path="/receipt/:branchId?" element={<ReceiptPage />} />
-            <Route path="/admin/*" element={<AdminPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </ToastProvider>
     </AuthProvider>
   );
 }

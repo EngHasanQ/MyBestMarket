@@ -47,6 +47,7 @@ export interface Product {
   categoryId: number;
   categoryName?: string | null;
   categoryIcon?: string | null;
+  categorySlug?: string | null;
   cheapest: CheapestPrice | null;
 }
 
@@ -59,6 +60,7 @@ export interface ComparisonBranch {
 }
 
 export interface Comparison {
+  priceId: number;
   branchId: number;
   price: number;
   confidence: number;
@@ -253,4 +255,13 @@ export interface SourceProfile {
   isConfirmed: boolean;
   lastSuccessAt: string | null;
   failureCount: number;
+}
+
+export interface PriceEvidence {
+  id: number;
+  evidenceType: 'product_image' | 'page_screenshot' | 'flyer_crop' | 'receipt';
+  imageUrl: string | null;
+  thumbUrl: string | null;
+  sourceUrl: string | null;
+  capturedAt: string;
 }

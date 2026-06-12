@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import type { City } from '../types';
+import { Building2, LocateFixed } from 'lucide-react';
 import { Button, ErrorBox, Spinner, inputClass } from '../components/ui';
 
 export default function SelectCity() {
@@ -103,8 +104,8 @@ export default function SelectCity() {
             </select>
           </label>
 
-          <button onClick={locate} className="mt-3 text-right text-sm font-bold text-primary">
-            📍 أو حدد موقعي تلقائياً
+          <button onClick={locate} className="mt-3 flex min-h-11 items-center gap-1.5 text-sm font-bold text-primary">
+            <LocateFixed size={17} strokeWidth={2} /> أو حدد موقعي تلقائياً
           </button>
           {geoError && <p className="mt-1 text-xs text-amber">{geoError}</p>}
 
@@ -122,7 +123,7 @@ export default function SelectCity() {
                     : 'border-gray-200 bg-white text-gray-700'
                 }`}
               >
-                <span className="mb-1 block text-xl">🕌</span>
+                <Building2 size={20} strokeWidth={1.6} className="mx-auto mb-1" />
                 {c.nameAr}
               </button>
             ))}

@@ -1,13 +1,16 @@
+// شريط تنقل سفلي 64px + safe-area، أيقونات lucide بحالة نشطة (جزء 3.3)
+
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { Bell, Home, ListTodo, Search, User } from 'lucide-react';
 import { api } from '../api';
 
 const tabs = [
-  { to: '/', icon: '🏠', label: 'الرئيسية' },
-  { to: '/search', icon: '🔍', label: 'البحث' },
-  { to: '/lists', icon: '🛒', label: 'قوائمي' },
-  { to: '/notifications', icon: '🔔', label: 'الإشعارات' },
-  { to: '/account', icon: '👤', label: 'حسابي' },
+  { to: '/', icon: Home, label: 'الرئيسية' },
+  { to: '/search', icon: Search, label: 'البحث' },
+  { to: '/lists', icon: ListTodo, label: 'قوائمي' },
+  { to: '/notifications', icon: Bell, label: 'الإشعارات' },
+  { to: '/account', icon: User, label: 'حسابي' },
 ];
 
 export function BottomNav() {
@@ -22,23 +25,27 @@ export function BottomNav() {
   }, [location.pathname]);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex max-w-md justify-around">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-surface pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex h-16 max-w-md items-stretch justify-around">
         {tabs.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}
             className={({ isActive }) =>
-              `relative flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] ${
-                isActive ? 'font-bold text-primary' : 'text-gray-400'
+              `relative flex min-w-11 flex-col items-center justify-center gap-0.5 px-2 text-[11px] ${
+                isActive ? 'font-bold text-primary' : 'text-ink-2'
               }`
             }
           >
-            <span className="text-lg leading-none">{t.icon}</span>
-            {t.to === '/notifications' && unread > 0 && (
-              <span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-red-500" />
+            {({ isActive }) => (
+              <>
+                <t.icon size={24} strokeWidth={isActive ? 2.2 : 1.8} />
+                {t.to === '/notifications' && unread > 0 && (
+                  <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-red-500" />
+                )}
+                {t.label}
+              </>
             )}
-            {t.label}
           </NavLink>
         ))}
       </div>

@@ -43,7 +43,7 @@ export function ManageTab() {
       slug: String(f.get('slug')),
       type: String(f.get('type')),
     });
-    flash('✓ أُضيف المتجر');
+    flash('أُضيف المتجر');
     api.admin.stores().then(setStores).catch(() => undefined);
   };
 
@@ -55,7 +55,7 @@ export function ManageTab() {
       cityId: Number(f.get('cityId')),
       nameAr: String(f.get('nameAr')),
     });
-    flash('✓ أُضيف الفرع');
+    flash('أُضيف الفرع');
   };
 
   const onProduct = async (e: FormEvent<HTMLFormElement>) => {
@@ -66,14 +66,14 @@ export function ManageTab() {
       categoryId: Number(f.get('categoryId')),
       brand: String(f.get('brand')) || undefined,
     });
-    flash('✓ أُضيف المنتج');
+    flash('أُضيف المنتج');
   };
 
   return (
     <div className="flex max-w-md flex-col gap-3">
       {msg && <div className="rounded-xl bg-primary-light p-3 text-sm font-bold text-primary">{msg}</div>}
 
-      <Section title="➕ متجر جديد">
+      <Section title="متجر جديد">
         <form onSubmit={onStore} className="flex flex-col gap-2">
           <input name="nameAr" placeholder="الاسم بالعربية" className={inputClass} required />
           <input name="slug" placeholder="slug (لاتيني)" dir="ltr" className={inputClass} required />
@@ -86,7 +86,7 @@ export function ManageTab() {
         </form>
       </Section>
 
-      <Section title="➕ فرع جديد">
+      <Section title="فرع جديد">
         <form onSubmit={onBranch} className="flex flex-col gap-2">
           <select name="storeId" className={inputClass} required>
             {stores.map((s) => (
@@ -107,7 +107,7 @@ export function ManageTab() {
         </form>
       </Section>
 
-      <Section title="➕ منتج جديد">
+      <Section title="منتج جديد">
         <form onSubmit={onProduct} className="flex flex-col gap-2">
           <input name="nameAr" placeholder="اسم المنتج الكامل (مع الحجم)" className={inputClass} required />
           <input name="brand" placeholder="العلامة التجارية" className={inputClass} />
@@ -124,8 +124,8 @@ export function ManageTab() {
         </form>
       </Section>
 
-      <Section title="➕ سعر يدوي">
-        <ManualPrice branches={branches} cityId={user?.cityId ?? 0} onDone={() => flash('✓ أُضيف السعر')} />
+      <Section title="سعر يدوي">
+        <ManualPrice branches={branches} cityId={user?.cityId ?? 0} onDone={() => flash('أُضيف السعر')} />
       </Section>
     </div>
   );

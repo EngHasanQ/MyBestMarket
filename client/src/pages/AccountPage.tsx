@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Bell, Settings, X } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import type { City, PriceAlert } from '../types';
@@ -67,12 +68,14 @@ export default function AccountPage() {
             ))}
           </select>
         </label>
-        {saved && <p className="text-xs font-bold text-primary">✓ حُفظ</p>}
+        {saved && <p className="text-xs font-bold text-primary">حُفظ بنجاح</p>}
       </div>
 
       {alerts.length > 0 && (
         <div className="mx-4 mt-3 rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-2 font-bold text-gray-900">🔔 تنبيهات الأسعار</h2>
+          <h2 className="t-section mb-2 flex items-center gap-1.5 text-ink">
+            <Bell size={17} strokeWidth={1.8} /> تنبيهات الأسعار
+          </h2>
           {alerts.map((a) => (
             <div key={a.id} className="flex items-center justify-between border-b border-gray-50 py-2 last:border-0">
               <Link to={`/product/${a.productId}`} className="text-sm text-gray-700">
@@ -86,9 +89,10 @@ export default function AccountPage() {
                   onClick={() =>
                     api.deleteAlert(a.id).then(() => setAlerts((x) => x.filter((y) => y.id !== a.id)))
                   }
-                  className="text-gray-300"
+                  aria-label="حذف"
+                  className="flex h-11 w-11 items-center justify-center text-gray-300"
                 >
-                  ✕
+                  <X size={16} strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -102,7 +106,9 @@ export default function AccountPage() {
             to="/admin"
             className="block rounded-2xl border border-primary bg-primary-light p-4 text-center font-bold text-primary"
           >
-            ⚙️ لوحة الإدارة
+            <span className="flex items-center justify-center gap-2">
+              <Settings size={18} strokeWidth={1.8} /> لوحة الإدارة
+            </span>
           </Link>
         </div>
       )}

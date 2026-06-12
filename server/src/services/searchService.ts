@@ -118,6 +118,7 @@ export async function searchProducts(query: string, limit = 60) {
       product: schema.products,
       categoryName: schema.categories.nameAr,
       categoryIcon: schema.categories.icon,
+      categorySlug: schema.categories.slug,
     })
     .from(schema.products)
     .innerJoin(schema.categories, sql`${schema.products.categoryId} = ${schema.categories.id}`)

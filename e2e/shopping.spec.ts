@@ -78,7 +78,7 @@ test('دون اتصال: الشطب يصمد ويُزامن عند عودة ال
   await page.goto('/search?q=أرز');
   await page.getByTestId('add-to-list').first().click();
   // انتظر اكتمال الإضافة قبل المغادرة (الزر يتحول إلى "أُضيف")
-  await expect(page.getByText('✓ أُضيف').first()).toBeVisible();
+  await expect(page.getByText('أُضيف').first()).toBeVisible();
   await page.goto('/lists');
   await page.getByRole('link').filter({ hasText: 'قائمتي' }).first().click();
   await page.getByTestId('start-shopping').click();
