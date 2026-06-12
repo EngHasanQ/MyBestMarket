@@ -1,10 +1,9 @@
 // المدن والتصنيفات والمنتجات والمقارنة — كل الاستعلامات مقيدة بالمدينة (القسم 5-A)
 
 import { Router } from 'express';
-import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
-import { normalizeArabic } from '../services/normalize.js';
 import { resolveProductPrices } from '../services/priceResolver.js';
 import { detectBestTimes } from '../services/bestTime.js';
 
@@ -44,39 +43,49 @@ const productsQuery = z.object({
 catalogRouter.get('/products', async (req, res, next) => {
   try {
     const query = productsQuery.parse(req.query);
-    const filters = [];
-    if (query.categoryId) {
-      // تصنيف رئيس يشمل أبناءه
-      const children = await db
-        .select({ id: schema.categories.id })
-        .from(schema.categories)
-        .where(eq(schema.categories.parentId, query.categoryId));
-      const ids = [query.categoryId, ...children.map((c) => c.id)];
-      filters.push(inArray(schema.products.categoryId, ids));
-    }
-    if (query.q) {
-      const normalized = normalizeArabic(query.q);
-      filters.push(
-        or(
-          ilike(schema.products.normalizedName, `%${normalized}%`),
-          sql`similarity(${schema.products.normalizedName}, ${normalized}) > 0.25`,
-        ),
-      );
-    }
 
-    const rows = await db
-      .select({
-        product: schema.products,
-        categoryName: schema.categories.nameAr,
-        categoryIcon: schema.categories.icon,
-        categorySort: schema.categories.sortOrder,
-      })
-      .from(schema.products)
-      .innerJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
-      .where(filters.length ? and(...filters) : undefined)
-      .orderBy(asc(schema.categories.sortOrder), asc(schema.products.nameAr))
-      .limit(query.limit)
-      .offset(query.offset);
+    let rows: Array<{
+      product: typeof schema.products.$inferSelect;
+      categoryName: string;
+      categoryIcon: string | null;
+    }>;
+
+    if (query.q) {
+      // البحث الموحد: مرادفات + مطبّع + pg_trgm بترتيب الصلة (جزء 4)
+      const { searchProducts } = await import('../services/searchService.js');
+      rows = await searchProducts(query.q, query.limit);
+      if (query.categoryId) {
+        const children = await db
+          .select({ id: schema.categories.id })
+          .from(schema.categories)
+          .where(eq(schema.categories.parentId, query.categoryId));
+        const ids = new Set([query.categoryId, ...children.map((c) => c.id)]);
+        rows = rows.filter((r) => ids.has(r.product.categoryId));
+      }
+    } else {
+      const filters = [ne(schema.products.status, 'merged')];
+      if (query.categoryId) {
+        // تصنيف رئيس يشمل أبناءه
+        const children = await db
+          .select({ id: schema.categories.id })
+          .from(schema.categories)
+          .where(eq(schema.categories.parentId, query.categoryId));
+        const ids = [query.categoryId, ...children.map((c) => c.id)];
+        filters.push(inArray(schema.products.categoryId, ids));
+      }
+      rows = await db
+        .select({
+          product: schema.products,
+          categoryName: schema.categories.nameAr,
+          categoryIcon: schema.categories.icon,
+        })
+        .from(schema.products)
+        .innerJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
+        .where(and(...filters))
+        .orderBy(asc(schema.categories.sortOrder), asc(schema.products.nameAr))
+        .limit(query.limit)
+        .offset(query.offset);
+    }
 
     // أرخص سعر معروض لكل منتج في مدينة المستخدم (مع شارة الحداثة)
     const withPrices = await Promise.all(

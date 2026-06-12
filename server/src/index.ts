@@ -13,9 +13,12 @@ import { registerAllJobs, scheduleJobs } from './jobs/index.js';
  */
 async function bootstrapSeedIfEmpty() {
   if (process.env.BOOTSTRAP_SEED === 'false') return;
-  const { runSeed, ensureCities, ensureCategoryIcons } = await import('./seed/index.js');
+  const { runSeed, ensureCities, ensureCategoryIcons, ensureSynonyms } = await import(
+    './seed/index.js'
+  );
   await ensureCities();
   await ensureCategoryIcons();
+  await ensureSynonyms();
   const anyProduct = await db.select().from(schema.products).limit(1);
   if (anyProduct.length > 0) return;
   logger.warn('كتالوج فارغ — تشغيل البذر التلقائي (بلا مسح)');

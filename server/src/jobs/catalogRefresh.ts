@@ -4,7 +4,8 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from '../db/index.js';
 import { getAdapters } from '../adapters/registry.js';
-import { matchProduct, saveAlias } from '../services/productMatcher.js';
+import { autoCreateProduct, matchProduct, saveAlias } from '../services/productMatcher.js';
+import { addEvidence, downloadEvidenceImage, publicEvidenceUrl } from '../services/evidence.js';
 import { submitPrice } from '../services/priceResolver.js';
 import { baseConfidence } from '../services/confidence.js';
 import type { JobResult } from './framework.js';
@@ -39,6 +40,10 @@ export async function catalogRefresh(): Promise<JobResult> {
 
       const catalog = await adapter.fetchCatalog(cityCodes[0]?.code ?? '');
       const offers = await adapter.fetchOffers(cityCodes[0]?.code ?? '');
+      // تغطية الزحف: عدد تصنيفات المتجر التي زُحفت (جزء 1.1)
+      const categoriesCrawled = adapter.fetchCategoryTree
+        ? (await adapter.fetchCategoryTree()).length
+        : null;
       // رابط مصدر السلسلة (كتالوج إلكتروني/API) — يُختم به كل سعر مكشوط
       const profile = await db.query.storeSourceProfiles.findFirst({
         where: eq(schema.storeSourceProfiles.storeId, storeId),
@@ -47,7 +52,7 @@ export async function catalogRefresh(): Promise<JobResult> {
       itemsIn += catalog.length + offers.length;
       let written = 0;
       let skippedUnchanged = 0;
-      let unmatched = 0;
+      let autoCreated = 0;
 
       const all = [
         ...catalog.map((c) => ({ ...c, isOffer: false, offerEndsAt: null as Date | null })),
@@ -61,10 +66,17 @@ export async function catalogRefresh(): Promise<JobResult> {
         { item: (typeof all)[number]; productId: number; score: number }
       >();
       for (const item of all) {
-        const match = await matchProduct(item.rawName, storeId);
+        let match = await matchProduct(item.rawName, storeId);
         if (!match) {
-          unmatched++;
-          continue;
+          // لا إسقاط: أنشئ منتجاً قياسياً بحالة auto_created للمراجعة/الدمج لاحقاً
+          match = await autoCreateProduct({
+            rawName: item.rawName,
+            storeId,
+            brand: item.brand,
+            barcode: item.barcode,
+            storeCategoryPath: item.storeCategoryPath,
+          });
+          autoCreated++;
         }
         const key = `${match.productId}:${item.isOffer}`;
         const prev = bestByKey.get(key);
@@ -78,12 +90,17 @@ export async function catalogRefresh(): Promise<JobResult> {
           await saveAlias(productId, storeId, item.rawName);
         }
 
-        // التقط صورة المنتج من مصدر المتجر إذا لم تكن لدينا صورة بعد
+        // صورة المنتج من نفس المصدر: تنزيل لنسخة محلية بهاش المحتوى (جزء 2.3)
+        let evidenceImage: string | null = null;
         if (item.imageUrl) {
-          await db
-            .update(schema.products)
-            .set({ imageUrl: item.imageUrl })
-            .where(and(eq(schema.products.id, productId), isNull(schema.products.imageUrl)));
+          evidenceImage = await downloadEvidenceImage(item.imageUrl);
+          const localUrl = publicEvidenceUrl(evidenceImage);
+          if (localUrl) {
+            await db
+              .update(schema.products)
+              .set({ imageUrl: localUrl })
+              .where(and(eq(schema.products.id, productId), isNull(schema.products.imageUrl)));
+          }
         }
 
         for (const branch of targetBranches) {
@@ -126,12 +143,30 @@ export async function catalogRefresh(): Promise<JobResult> {
             offerEndsAt: item.offerEndsAt,
             sourceUrl: item.productUrl ?? chainSourceUrl,
           });
-          if (result.status === 'published') written++;
+          if (result.status === 'published') {
+            written++;
+            // دليل السعر: صورة المنتج كما وردت من المصدر + رابط صفحته (جزء 2.1)
+            if (evidenceImage || item.productUrl || chainSourceUrl) {
+              await addEvidence({
+                priceId: result.priceId,
+                evidenceType: 'product_image',
+                imagePath: evidenceImage,
+                sourceUrl: item.productUrl ?? chainSourceUrl,
+              });
+            }
+          }
         }
       }
 
       itemsOut += written;
-      detail[adapter.storeSlug] = { written, skippedUnchanged, unmatched };
+      detail[adapter.storeSlug] = {
+        productsFound: catalog.length,
+        offersFound: offers.length,
+        categoriesCrawled,
+        written,
+        skippedUnchanged,
+        autoCreated,
+      };
 
       await db
         .update(schema.storeSourceProfiles)

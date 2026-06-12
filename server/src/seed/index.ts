@@ -33,6 +33,10 @@ function rng(seed: number) {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 async function wipe() {
+  await db.delete(schema.priceEvidence);
+  await db.delete(schema.productRequests);
+  await db.delete(schema.categoryMappings);
+  await db.delete(schema.searchSynonyms);
   await db.delete(schema.kpiSnapshots);
   await db.delete(schema.jobRuns);
   await db.delete(schema.chainCalibrations);
@@ -104,12 +108,45 @@ export async function ensureCategoryIcons() {
   }
 }
 
+// مجموعات مرادفات البحث (سبرنت v2 — جزء 4): "زبادي" يجب أن يجد "روب"
+const SYNONYM_GROUPS: string[][] = [
+  ['زبادي', 'روب', 'لبن رايب'],
+  ['حليب', 'لبن طازج'],
+  ['شاي', 'شاهي'],
+  ['ارز', 'رز'],
+  ['مكرونه', 'معكرونه', 'باستا'],
+  ['مناديل', 'محارم'],
+  ['ماء', 'مياه', 'مويه'],
+  ['مسحوق', 'صابون غسيل', 'منظف غسيل'],
+  ['حفاضات', 'حفايض', 'بامبرز'],
+  ['جبن', 'جبنه'],
+  ['عصير', 'جوس'],
+  ['المراعي', 'almarai'],
+  ['نادك', 'nadec'],
+  ['نستله', 'nestle'],
+  ['ليبتون', 'lipton'],
+  ['بيبسي', 'pepsi'],
+  ['تايد', 'tide'],
+];
+
+/** upsert مرادفات البحث — يُستدعى عند كل إقلاع */
+export async function ensureSynonyms() {
+  const values = SYNONYM_GROUPS.flatMap((group, i) =>
+    group.map((term) => ({
+      groupKey: `g${i}-${normalizeArabic(group[0]!)}`,
+      term: normalizeArabic(term),
+    })),
+  );
+  await db.insert(schema.searchSynonyms).values(values).onConflictDoNothing();
+}
+
 export async function runSeed(opts: { wipe?: boolean } = {}): Promise<SeedCounts> {
   const rand = rng(20260612);
   if (opts.wipe ?? true) await wipe();
 
-  // 1) مدن — upsert كامل قائمة المملكة
+  // 1) مدن + مرادفات — upsert
   const cityRows = await ensureCities();
+  await ensureSynonyms();
   const cityByCode = new Map(cityRows.map((c) => [c.code, c]));
 
   // 2) متاجر وفروع

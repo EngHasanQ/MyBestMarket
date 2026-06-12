@@ -15,6 +15,13 @@
       "when": 1781264641945,
       "tag": "0001_aromatic_starbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781280129284,
+      "tag": "0002_minor_hercules",
+      "breakpoints": true
     }
   ]
 }

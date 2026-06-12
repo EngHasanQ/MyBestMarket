@@ -79,3 +79,39 @@ export function chainKey(placeName: string): string {
   const words = s.split(' ').filter((w) => !CHAIN_NOISE.includes(w));
   return (words.join(' ') || s).trim();
 }
+
+// ---------- استخراج الحجم وتوحيده (سبرنت v2 — جزء 1.2) ----------
+
+export interface ExtractedSize {
+  value: number;
+  unit: 'لتر' | 'كجم' | 'حبة';
+}
+
+const UNIT_MAP: Array<{ pattern: RegExp; unit: ExtractedSize['unit']; factor: number }> = [
+  { pattern: /^(لتر|ليتر|ل|l|liter|litre)$/i, unit: 'لتر', factor: 1 },
+  { pattern: /^(مل|ملي|ميلي|ml)$/i, unit: 'لتر', factor: 1 / 1000 },
+  { pattern: /^(كجم|كيلو|كغ|kg|كيلوجرام|كيلوغرام)$/i, unit: 'كجم', factor: 1 },
+  { pattern: /^(جم|جرام|غرام|غم|g|gm|gram)$/i, unit: 'كجم', factor: 1 / 1000 },
+  { pattern: /^(حبه|حبات|قطعه|قطع|كيس|اكياس|عبوه|عبوات|لفه|لفات|قرص|اقراص|ورقه)$/i, unit: 'حبة', factor: 1 },
+];
+
+/**
+ * يستخرج أول (قيمة، وحدة) من اسم منتج ويوحّدها:
+ * "٢ لتر" و"2L" و"2000 مل" كلها → { value: 2, unit: 'لتر' }
+ */
+export function extractSize(name: string): ExtractedSize | null {
+  const s = normalizeArabic(name);
+  // رقم متبوع بوحدة (بمسافة أو ملاصقة مثل 2l أو 500g)
+  const re = /(\d+(?:\.\d+)?)\s*([a-z؀-ۿ]+)/gi;
+  for (const m of s.matchAll(re)) {
+    const value = parseFloat(m[1]!);
+    if (!Number.isFinite(value) || value <= 0) continue;
+    for (const u of UNIT_MAP) {
+      if (u.pattern.test(m[2]!)) {
+        const v = value * u.factor;
+        return { value: Math.round(v * 1000) / 1000, unit: u.unit };
+      }
+    }
+  }
+  return null;
+}

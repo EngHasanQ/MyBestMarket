@@ -105,6 +105,14 @@ pricesRouter.post('/receipt', upload.single('image'), async (req, res, next) => 
           reportedBy: req.user!.id,
           proofImageUrl,
         });
+        if (result.status === 'published' && proofImageUrl) {
+          const { addEvidence } = await import('../services/evidence.js');
+          await addEvidence({
+            priceId: result.priceId,
+            evidenceType: 'receipt',
+            imagePath: proofImageUrl,
+          });
+        }
         if (match.via === 'fuzzy') await saveAlias(match.productId, branch.storeId, line.productName);
         matched.push({
           line: line.rawText,
@@ -148,6 +156,44 @@ pricesRouter.post('/receipt/confirm-line', async (req, res, next) => {
     });
     await saveAlias(body.productId, branch.storeId, body.rawName);
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- إثبات السعر (سبرنت v2 — جزء 2.2) ----------
+pricesRouter.get('/prices/:priceId/evidence', async (req, res, next) => {
+  try {
+    const { listEvidence } = await import('../services/evidence.js');
+    res.json(await listEvidence(Number(req.params.priceId)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** صور الأدلة: نقطة مخولة مع كاش ومصغرات 200px */
+pricesRouter.get('/evidence/img/:name', async (req, res, next) => {
+  try {
+    const { thumbnailPath, originalPath } = await import('../services/evidence.js');
+    const file =
+      req.query.thumb === '1' ? await thumbnailPath(req.params.name) : originalPath(req.params.name);
+    res.setHeader('Cache-Control', 'private, max-age=2592000, immutable');
+    res.sendFile(file);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** طلب إضافة منتج مفقود (الحالة الفارغة في البحث) */
+pricesRouter.post('/product-requests', async (req, res, next) => {
+  try {
+    const body = z.object({ query: z.string().min(2).max(200) }).parse(req.body);
+    const me = await db.query.users.findFirst({ where: eq(schema.users.id, req.user!.id) });
+    const [row] = await db
+      .insert(schema.productRequests)
+      .values({ userId: req.user!.id, query: body.query, cityId: me?.cityId ?? null })
+      .returning();
+    res.status(201).json(row);
   } catch (err) {
     next(err);
   }

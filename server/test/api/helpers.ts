@@ -5,6 +5,10 @@ import { normalizeArabic } from '../../src/services/normalize.js';
 
 /** تفريغ كل الجداول بترتيب FKs الصحيح قبل كل ملف اختبار */
 export async function resetDb() {
+  await db.delete(schema.priceEvidence);
+  await db.delete(schema.productRequests);
+  await db.delete(schema.categoryMappings);
+  await db.delete(schema.searchSynonyms);
   await db.delete(schema.kpiSnapshots);
   await db.delete(schema.jobRuns);
   await db.delete(schema.chainCalibrations);

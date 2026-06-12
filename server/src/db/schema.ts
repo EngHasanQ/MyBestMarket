@@ -36,6 +36,13 @@ export const placeStatus = pgEnum('place_status', [
 ]);
 export const sourceType = pgEnum('source_type', ['api', 'web_catalog', 'flyer', 'user_only']);
 export const jobStatus = pgEnum('job_status', ['running', 'success', 'failed']);
+export const productStatus = pgEnum('product_status', ['active', 'auto_created', 'merged']);
+export const evidenceType = pgEnum('evidence_type', [
+  'product_image',
+  'page_screenshot',
+  'flyer_crop',
+  'receipt',
+]);
 
 // ---------- Geography ----------
 export const cities = pgTable('cities', {
@@ -102,6 +109,9 @@ export const products = pgTable(
       .notNull()
       .references(() => categories.id),
     imageUrl: text('image_url'),
+    // active: مُعتمد | auto_created: أنشأه الاستيراد وينتظر مراجعة | merged: دُمج في آخر
+    status: productStatus('status').notNull().default('active'),
+    mergedInto: integer('merged_into'),
   },
   (t) => [index('products_normalized_idx').on(t.normalizedName)],
 );
@@ -333,5 +343,60 @@ export const kpiSnapshots = pgTable('kpi_snapshots', {
   storeId: integer('store_id').references(() => stores.id),
   displayedPrices: integer('displayed_prices').notNull().default(0),
   freshVerified: integer('fresh_verified').notNull().default(0), // confidence>=90 && age<=7d
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------- مرادفات البحث (سبرنت v2 — جزء 1.2/4) ----------
+// كل صف = مصطلح داخل مجموعة مترادفات؛ التوسعة: مصطلح الاستعلام → كل مصطلحات مجموعته
+export const searchSynonyms = pgTable(
+  'search_synonyms',
+  {
+    id: serial('id').primaryKey(),
+    groupKey: text('group_key').notNull(),
+    term: text('term').notNull(), // مطبّع بنفس normalizeArabic
+  },
+  (t) => [uniqueIndex('synonym_term_uq').on(t.term), index('synonym_group_idx').on(t.groupKey)],
+);
+
+// ---------- ربط تصنيفات المتجر بتصنيفاتنا (جزء 1.1) ----------
+export const categoryMappings = pgTable(
+  'category_mappings',
+  {
+    id: serial('id').primaryKey(),
+    storeId: integer('store_id')
+      .notNull()
+      .references(() => stores.id),
+    storeCategoryPath: text('store_category_path').notNull(),
+    categoryId: integer('category_id').references(() => categories.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('catmap_store_path_uq').on(t.storeId, t.storeCategoryPath)],
+);
+
+// ---------- إثبات السعر (جزء 2) ----------
+export const priceEvidence = pgTable(
+  'price_evidence',
+  {
+    id: serial('id').primaryKey(),
+    priceId: integer('price_id')
+      .notNull()
+      .references(() => prices.id, { onDelete: 'cascade' }),
+    evidenceType: evidenceType('evidence_type').notNull(),
+    imagePath: text('image_path'), // داخل storage/evidence — مخزن بهاش المحتوى
+    sourceUrl: text('source_url'),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('evidence_price_idx').on(t.priceId)],
+);
+
+// ---------- طلبات إضافة منتجات من المستخدمين (جزء 3.3 — الحالات الفارغة) ----------
+export const productRequests = pgTable('product_requests', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  query: text('query').notNull(),
+  cityId: integer('city_id').references(() => cities.id),
+  status: reviewStatus('status').notNull().default('pending'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

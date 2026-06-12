@@ -6,6 +6,7 @@ import { db, schema } from '../db/index.js';
 import type { StoreAdapter } from './types.js';
 import { pandaAdapter } from './pandaFixture.js';
 import { createSallaAdapter } from './sallaStorefront.js';
+import { createZidAdapter } from './zidStorefront.js';
 
 const staticAdapters: StoreAdapter[] = [pandaAdapter];
 
@@ -30,10 +31,13 @@ export async function getAdapters(): Promise<Map<number, StoreAdapter>> {
       ),
     );
   for (const p of profiles) {
-    if (out.has(p.storeId)) continue;
-    if (p.platformHint === 'salla' && p.endpointOrUrl) {
-      const store = allStores.find((s) => s.id === p.storeId);
-      if (store) out.set(p.storeId, createSallaAdapter(store.slug, p.endpointOrUrl));
+    if (out.has(p.storeId) || !p.endpointOrUrl) continue;
+    const store = allStores.find((s) => s.id === p.storeId);
+    if (!store) continue;
+    if (p.platformHint === 'salla') {
+      out.set(p.storeId, createSallaAdapter(store.slug, p.endpointOrUrl));
+    } else if (p.platformHint === 'zid') {
+      out.set(p.storeId, createZidAdapter(store.slug, p.endpointOrUrl));
     }
   }
   return out;

@@ -276,6 +276,17 @@ adminRouter.post('/review-queue/:id/approve', async (req, res, next) => {
       })
       .returning({ id: schema.prices.id });
 
+    // دليل السعر: صورة صفحة المجلة + رابط صفحة العروض (جزء 2.1)
+    if (item.flyerImageUrl || flyerProfile?.endpointOrUrl) {
+      const { addEvidence } = await import('../services/evidence.js');
+      await addEvidence({
+        priceId: row!.id,
+        evidenceType: 'flyer_crop',
+        imagePath: item.flyerImageUrl,
+        sourceUrl: flyerProfile?.endpointOrUrl ?? null,
+      });
+    }
+
     // الاعتماد مسجَّل بهوية المراجِع (القسم 7)
     await db
       .update(schema.offersReviewQueue)
@@ -452,6 +463,101 @@ adminRouter.get('/job-runs', async (_req, res, next) => {
       .orderBy(desc(schema.jobRuns.startedAt))
       .limit(100);
     res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- أدوات الكتالوج (سبرنت v2 — جزء 1) ----------
+
+/** دمج منتج مكرر في منتج قياسي (الأسعار والأسماء والقوائم تنتقل، مع أثر) */
+adminRouter.post('/products/:id/merge', async (req, res, next) => {
+  try {
+    const body = z.object({ targetId: z.number().int() }).parse(req.body);
+    const { mergeProducts } = await import('../services/productMatcher.js');
+    const moved = await mergeProducts(Number(req.params.id), body.targetId);
+    res.json({ ok: true, moved });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** تقرير تغطية الاستيراد لكل متجر (جزء 1.1) */
+adminRouter.get('/coverage', async (_req, res, next) => {
+  try {
+    const result = await db.execute(sql`
+      SELECT s.id AS store_id, s.name_ar,
+        (SELECT COUNT(DISTINCT p.product_id) FROM prices p
+          JOIN store_branches b ON b.id = p.branch_id
+          WHERE b.store_id = s.id)::int AS products_with_price,
+        (SELECT COUNT(*) FROM product_aliases a WHERE a.store_id = s.id)::int AS aliases,
+        (SELECT COUNT(*) FROM products pr
+          JOIN product_aliases al ON al.product_id = pr.id AND al.store_id = s.id
+          WHERE pr.status = 'auto_created')::int AS auto_created,
+        (SELECT COUNT(*) FROM category_mappings cm
+          WHERE cm.store_id = s.id AND cm.category_id IS NULL)::int AS unmapped_categories
+      FROM stores s ORDER BY s.id
+    `);
+    // آخر زحف كامل ناجح لكل متجر من تفاصيل job_runs
+    const lastRuns = await db.execute(sql`
+      SELECT detail, started_at FROM job_runs
+      WHERE job = 'catalog-refresh' AND status = 'success'
+      ORDER BY started_at DESC LIMIT 1
+    `);
+    res.json({ stores: result.rows, lastCrawl: lastRuns.rows[0] ?? null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** المنتجات المنشأة تلقائياً بانتظار التصنيف/الدمج */
+adminRouter.get('/auto-created', async (_req, res, next) => {
+  try {
+    const rows = await db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.status, 'auto_created'))
+      .orderBy(desc(schema.products.id))
+      .limit(200);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** طلبات المستخدمين لمنتجات مفقودة */
+adminRouter.get('/product-requests', async (_req, res, next) => {
+  try {
+    const rows = await db
+      .select()
+      .from(schema.productRequests)
+      .orderBy(desc(schema.productRequests.createdAt))
+      .limit(200);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** ربط تصنيفات المتجر بتصنيفاتنا (قابل للتحرير من الأدمن) */
+adminRouter.get('/category-mappings', async (_req, res, next) => {
+  try {
+    res.json(await db.select().from(schema.categoryMappings).orderBy(schema.categoryMappings.storeId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.patch('/category-mappings/:id', async (req, res, next) => {
+  try {
+    const body = z.object({ categoryId: z.number().int().nullable() }).parse(req.body);
+    const [row] = await db
+      .update(schema.categoryMappings)
+      .set({ categoryId: body.categoryId })
+      .where(eq(schema.categoryMappings.id, Number(req.params.id)))
+      .returning();
+    if (!row) return res.status(404).json({ error: 'الربط غير موجود' });
+    res.json(row);
   } catch (err) {
     next(err);
   }
