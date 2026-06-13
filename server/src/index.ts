@@ -27,32 +27,26 @@ async function bootstrapSeedIfEmpty() {
 }
 
 /**
- * تعبئة بيانات حقيقية تلقائياً (A3): إن لم توجد أي أسعار حقيقية (غير تجريبية)،
- * يزحف كتالوج التميمي الحيّ في الخلفية ويربط الأسعار بكل فروع التميمي وطنياً،
- * مشيراً لصور المصدر مباشرة (تظهر دون تخزين محلي). لا يحجب إقلاع الخادم.
+ * تعبئة بيانات حقيقية تلقائياً (A3) في الخلفية، مرّة واحدة (تُتتبَّع بعلامة في
+ * job_runs — لا تعتمد على is_demo حتى لا تخدعها بيانات بذر قديمة سبقت العمود):
+ *  - يزحف كتالوج التميمي الحيّ ويربط الأسعار بفرع لكل مدينة، مشيراً لصور المصدر.
+ *  - بعد نجاح الاستيراد فقط: يُعلّم بيانات البذر الاصطناعية السابقة كـ is_demo
+ *    (حسب حد معرّف السعر) فتُخفى في الإنتاج، ويبقى الكتالوج الحقيقي بصوره وأدلّته.
  *
- * يعمل في الإنتاج تلقائياً، أو عند AUTO_INGEST=1. يُعطَّل بـ AUTO_INGEST=false.
- * يُتخطّى في الاختبارات وعند توفّر بيانات حقيقية مسبقاً.
+ * يعمل في الإنتاج أو عند AUTO_INGEST=1. يُعطَّل بـ AUTO_INGEST=false. يُتخطّى في الاختبارات.
  */
 async function autoIngestRealDataInBackground() {
   if (process.env.AUTO_INGEST === 'false') return;
   const enabled = config.isProd || process.env.AUTO_INGEST === '1';
   if (!enabled || process.env.NODE_ENV === 'test') return;
 
-  const { eq } = await import('drizzle-orm');
-  const existingReal = await db
-    .select({ id: schema.prices.id })
-    .from(schema.prices)
-    .where(eq(schema.prices.isDemo, false))
-    .limit(1);
-  if (existingReal.length > 0) return; // بيانات حقيقية موجودة — لا حاجة
-
   void (async () => {
     try {
-      const { runIngest } = await import('./ingest/runIngest.js');
-      logger.info('بدء الاستيراد الحيّ التلقائي (التميمي، كل المدن) في الخلفية…');
-      const report = await runIngest({ storeSlug: 'tamimi', log: (l) => logger.info(l) });
-      logger.info(report, 'اكتمل الاستيراد الحيّ التلقائي');
+      const { runRealIngestJob } = await import('./ingest/runIngest.js');
+      logger.info('فحص الاستيراد الحيّ التلقائي (التميمي)…');
+      const r = await runRealIngestJob();
+      if (r.skipped) logger.info('الاستيراد الحيّ نُفِّذ مسبقاً — تخطٍّ');
+      else logger.info(r.report, 'اكتمل الاستيراد الحيّ التلقائي');
     } catch (err) {
       logger.error({ err: String(err) }, 'فشل الاستيراد الحيّ التلقائي');
     }

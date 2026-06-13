@@ -2,13 +2,16 @@
 // يُزحف الكتالوج العام، تُنزَّل صور المنتجات كأدلّة (product_image)، وتُنشر
 // الأسعار بأساس "online". وضع dry-run يثبت الوصول ويعدّ دون أي كتابة للقاعدة.
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, lte, sql } from 'drizzle-orm';
 import { db, schema } from '../db/index.js';
 import { createTamimiAdapter, TAMIMI_TOP_CATEGORIES } from '../adapters/tamimiStorefront.js';
 import type { StoreAdapter } from '../adapters/types.js';
 import { autoCreateProduct, matchProduct, saveAlias } from '../services/productMatcher.js';
 import { addEvidence } from '../services/evidence.js';
 import { submitPrice } from '../services/priceResolver.js';
+import { logger } from '../logger.js';
+
+export const AUTO_INGEST_JOB = 'auto_ingest_real';
 
 export interface IngestOptions {
   storeSlug: string;
@@ -182,4 +185,51 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
     `اكتمل: ${report.pricesWritten} سعراً، ${report.imagesDownloaded} صورة، ${report.evidenceCreated} دليلاً، ${report.autoCreated} منتجاً جديداً`,
   );
   return report;
+}
+
+/**
+ * مهمة الاستيراد الحقيقي الكاملة (تُستخدم عند الإقلاع ومن لوحة الأدمن):
+ * تلتقط حدّ معرّف السعر، تزحف التميمي، ثم تُخفي بيانات البذر السابقة بعد النجاح،
+ * وتسجّل كل ذلك في job_runs. force=true يتجاهل علامة "نُفِّذ مسبقاً".
+ */
+export async function runRealIngestJob(opts: { force?: boolean; log?: (l: string) => void } = {}) {
+  const log = opts.log ?? ((l: string) => logger.info(l));
+  if (!opts.force) {
+    const done = await db
+      .select({ id: schema.jobRuns.id })
+      .from(schema.jobRuns)
+      .where(and(eq(schema.jobRuns.job, AUTO_INGEST_JOB), eq(schema.jobRuns.status, 'success')))
+      .limit(1);
+    if (done.length > 0) return { skipped: true as const };
+  }
+
+  const [run] = await db
+    .insert(schema.jobRuns)
+    .values({ job: AUTO_INGEST_JOB, status: 'running' })
+    .returning({ id: schema.jobRuns.id });
+
+  try {
+    const [{ maxId }] = await db
+      .select({ maxId: sql<number>`coalesce(max(${schema.prices.id}), 0)` })
+      .from(schema.prices);
+    const beforeMax = Number(maxId) || 0;
+
+    const report = await runIngest({ storeSlug: 'tamimi', log });
+
+    if (report.pricesWritten > 0 && beforeMax > 0) {
+      await db.update(schema.prices).set({ isDemo: true }).where(lte(schema.prices.id, beforeMax));
+      log(`أُخفيت بيانات البذر الاصطناعية القديمة (حتى السعر #${beforeMax})`);
+    }
+    await db
+      .update(schema.jobRuns)
+      .set({ status: 'success', finishedAt: new Date(), itemsOut: report.pricesWritten, detail: report })
+      .where(eq(schema.jobRuns.id, run!.id));
+    return { skipped: false as const, report };
+  } catch (err) {
+    await db
+      .update(schema.jobRuns)
+      .set({ status: 'failed', finishedAt: new Date(), detail: { error: String(err) } })
+      .where(eq(schema.jobRuns.id, run!.id));
+    throw err;
+  }
 }

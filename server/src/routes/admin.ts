@@ -13,6 +13,7 @@ import { submitPrice, accuracyKpi } from '../services/priceResolver.js';
 import { parseFlyerText, parseValidity } from '../services/ocr/flyerParser.js';
 import { matchProduct, autoCreateProduct } from '../services/productMatcher.js';
 import { processFlyerPdf } from '../services/ocr/flyerPdf.js';
+import { runRealIngestJob, AUTO_INGEST_JOB } from '../ingest/runIngest.js';
 import { addEvidence } from '../services/evidence.js';
 import { runDiscoveryForCity, type PlaceResult } from '../services/discovery.js';
 import { qualifyStore, confirmSource, qualifyPendingStores } from '../services/sourceQualification.js';
@@ -487,6 +488,45 @@ adminRouter.get('/flyers/jobs/:id', (req, res) => {
   const job = flyerJobs.get(req.params.id!);
   if (!job) return res.status(404).json({ error: 'المهمة غير موجودة' });
   res.json(job);
+});
+
+// ---------- استيراد البيانات الحقيقية (التميمي) — تشغيل يدوي + حالة ----------
+adminRouter.post('/ingest/real', async (_req, res, next) => {
+  try {
+    const running = await db
+      .select({ id: schema.jobRuns.id })
+      .from(schema.jobRuns)
+      .where(and(eq(schema.jobRuns.job, AUTO_INGEST_JOB), eq(schema.jobRuns.status, 'running')))
+      .limit(1);
+    if (running.length > 0) return res.status(409).json({ error: 'استيراد جارٍ بالفعل' });
+    // تشغيل في الخلفية (force=true لإعادة الزحف وتحديث البيانات)
+    void runRealIngestJob({ force: true }).catch((err) =>
+      logger.error({ err: String(err) }, 'فشل الاستيراد اليدوي'),
+    );
+    res.status(202).json({ started: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get('/ingest/real/status', async (_req, res, next) => {
+  try {
+    const [last] = await db
+      .select()
+      .from(schema.jobRuns)
+      .where(eq(schema.jobRuns.job, AUTO_INGEST_JOB))
+      .orderBy(desc(schema.jobRuns.startedAt))
+      .limit(1);
+    const [counts] = await db.execute(sql`
+      SELECT
+        (SELECT COUNT(*) FROM prices WHERE is_demo = false)::int AS real_prices,
+        (SELECT COUNT(*) FROM products WHERE image_url LIKE 'http%')::int AS products_with_image,
+        (SELECT COUNT(*) FROM price_evidence WHERE evidence_type = 'product_image')::int AS product_image_evidence
+    `).then((r) => r.rows as Array<Record<string, number>>);
+    res.json({ job: last ?? null, counts: counts ?? {} });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // اعتماد جماعي: ينشر كل عناصر المراجعة المعلّقة لفرع، ويُنشئ المنتجات غير المطابقة
