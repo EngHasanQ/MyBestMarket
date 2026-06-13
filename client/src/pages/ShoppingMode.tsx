@@ -162,7 +162,7 @@ export default function ShoppingMode() {
           </div>
           <button
             onClick={() => navigate('/lists')}
-            className="glow-teal mt-6 w-full rounded-xl bg-primary py-3 font-bold text-app"
+            className="btn-primary mt-6 w-full rounded-xl py-3 font-bold"
           >
             العودة لقوائمي
           </button>
@@ -279,7 +279,7 @@ export default function ShoppingMode() {
           <button
             data-testid="finish-shopping"
             onClick={finish}
-            className="glow-teal rounded-xl bg-primary px-5 py-3 font-bold text-app active:bg-primary-dark"
+            className="btn-primary rounded-xl px-5 py-3 font-bold"
           >
             إنهاء التسوق
           </button>

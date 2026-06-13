@@ -67,7 +67,7 @@ export function ReviewTab() {
               data-testid="approve-review"
               onClick={() => void act(item, 'approve')}
               disabled={!item.matchedProductId}
-              className="rounded-xl glow-teal bg-primary px-4 py-2 text-sm font-bold text-app disabled:bg-gray-200"
+              className="btn-primary rounded-xl px-4 py-2 text-sm font-bold"
             >
               اعتماد
             </button>

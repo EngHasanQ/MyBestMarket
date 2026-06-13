@@ -70,9 +70,7 @@ export function ProductCard({ product }: { product: Product }) {
         disabled={busy}
         onClick={add}
         className={`flex h-11 items-center justify-center gap-1 rounded-(--radius-btn) text-sm font-bold ${
-          added
-            ? 'bg-primary-light text-primary'
-            : 'glow-teal bg-primary text-app active:bg-primary-dark'
+          added ? 'bg-primary-light text-primary' : 'btn-primary'
         }`}
       >
         {added ? (

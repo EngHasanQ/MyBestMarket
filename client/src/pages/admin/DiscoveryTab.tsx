@@ -89,7 +89,7 @@ export function DiscoveryTab() {
               ) : (
                 <button
                   onClick={() => api.admin.confirmSource(p.id).then(load)}
-                  className="rounded-lg glow-teal bg-primary px-3 py-1.5 text-xs font-bold text-app"
+                  className="btn-primary rounded-lg px-3 py-1.5 text-xs font-bold"
                 >
                   تأكيد وتفعيل
                 </button>

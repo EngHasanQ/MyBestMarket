@@ -72,7 +72,7 @@ export function Button({
   full?: boolean;
 }) {
   const styles = {
-    primary: 'glow-teal bg-primary text-app active:bg-primary-dark disabled:bg-gray-300 disabled:text-ink-3',
+    primary: 'btn-primary',
     outline: 'border border-primary text-primary bg-surface active:bg-primary-light',
     ghost: 'text-ink-2 active:bg-gray-100',
     danger: 'border border-red-300 text-danger bg-app active:bg-red-50',

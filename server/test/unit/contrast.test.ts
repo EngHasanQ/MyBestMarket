@@ -50,6 +50,7 @@ const ink2 = token('ink-2');
 const ink3 = token('ink-3');
 const sky = token('sky');
 const price = token('price');
+const cta = token('cta'); // بداية تدرّج الزر الرئيسي (نص أبيض عليه)
 
 const AA_TEXT = 4.5; // نص عادي
 const AA_UI = 3.0; // عناصر واجهة/نص كبير
@@ -83,16 +84,18 @@ const PAIRS: Array<[string, string, string, number]> = [
   ['price/app', price, app, AA_TEXT],
   // الأخطاء — نص الخطأ يظهر على القاعدة الداكنة (زر danger خلفيته bg-app)
   ['danger/app', danger, app, AA_TEXT],
-  // نص داكن على أزرار/رقائق ملونة (نص الزر الرئيسي #app على تيل، توست على كهرماني/أحمر)
+  // نص أبيض على زر CTA المتدرّج (أسوأ حالة = بداية التدرّج الأفتح)
+  ['white-on-cta', ink, cta, AA_TEXT],
+  // نص داكن على رقائق/شارات أزرق سماوي فاتح وكهرماني وأحمر (الأرخص/التوست)
   ['app-on-primary', app, primary, AA_TEXT],
   ['app-on-amber', app, amber, AA_TEXT],
   ['app-on-danger', app, danger, AA_TEXT],
 ];
 
 describe('B1 تباين WCAG AA على أزواج الرموز', () => {
-  it('الهوية داكنة فعلاً: خلفية التطبيق #04293a', () => {
-    expect(app).toBe('#04293a');
-    expect(primary).toBe('#2dd4bf');
+  it('الهوية أزرق داكن فعلاً: خلفية التطبيق #0a0e1a', () => {
+    expect(app).toBe('#0a0e1a');
+    expect(primary).toBe('#6ba5ff');
   });
 
   for (const [label, fg, bg, min] of PAIRS) {

@@ -108,12 +108,16 @@ for (const width of [360, 390]) {
     await expect(page.getByTestId('evidence-sheet').getByText('الموثوقية')).toBeVisible();
     await expect(page).toHaveScreenshot(`evidence-${width}.png`, shot);
 
-    // 5) القوائم
+    // 5) القوائم — انتظر تحميل بطاقة القائمة (لا الهيكل) قبل اللقطة
     await page.goto('/lists');
     await expect(page.getByTestId('generate-monthly')).toBeVisible();
+    await expect(page.getByText('قائمة التسوق')).toBeVisible();
     await assertNoHScroll(page, 'lists', width);
     await assertTouchTargets(page, 'lists');
-    await expect(page).toHaveScreenshot(`lists-${width}.png`, shot);
+    await expect(page).toHaveScreenshot(`lists-${width}.png`, {
+      ...shot,
+      mask: [page.locator('a.card .t-caption')], // تاريخ الإنشاء (متغيّر)
+    });
 
     // 6) وضع التسوق (قائمة مبنية عبر API)
     await page.goto(`/shopping/${ctx.listId}`);

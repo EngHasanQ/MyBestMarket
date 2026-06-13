@@ -1,36 +1,38 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   هوية "المحيط العميق" (Deep Ocean) — سبرنت v3 / Workstream B
-   مصدر الحقيقة الوحيد للرموز. داكن فاخر، عمق عبر طبقات سطحية وحدود شعرية.
+   هوية "Midnight Azure" — أزرق داكن احترافي + أبيض (سبرنت v3.1)
+   مصدر الحقيقة الوحيد للرموز. عمق عبر طبقات سطحية، تدرّجات أزرق هادئة،
+   وحدود شعرية. مستوحى من أناقة الواجهات الداكنة المدروسة.
    ========================================================================= */
 @theme {
-  /* الخلفيات */
-  --color-app: #04293a;        /* قاع الهاوية — خلفية التطبيق */
-  --color-cream: #04293a;      /* (اسم قديم) = خلفية التطبيق الداكنة */
-  --color-surface: #0a3a50;    /* سطح مرتفع: حقول/شيتات/لوحات */
-  --color-card: #0d425a;       /* بطاقة */
-  --color-elevated: #11506c;   /* أعلى ارتفاع */
-  --color-nav: #062f42;        /* الشريط السفلي */
+  /* الخلفيات — كحلي داكن متدرّج العمق */
+  --color-app: #0a0e1a;        /* القاعدة العميقة — خلفية التطبيق */
+  --color-cream: #0a0e1a;      /* (اسم قديم) = خلفية التطبيق */
+  --color-surface: #141b2e;    /* سطح مرتفع: حقول/شيتات/لوحات */
+  --color-card: #1a2236;       /* بطاقة */
+  --color-elevated: #232e47;   /* أعلى ارتفاع */
+  --color-nav: #0b1020;        /* الشريط السفلي */
 
-  /* اللون المميّز (تيل) */
-  --color-primary: #2dd4bf;       /* أفعال رئيسية، تبويب نشط، "الأرخص" */
-  --color-primary-dark: #14b8a6;
-  --color-primary-light: #123c49; /* دائرة تصنيف/خلفية مميّزة خفيفة (تيل +tint) */
-  --color-sky: #7dd3fc;           /* روابط/شارات حداثة */
+  /* اللون المميّز (أزرق سماوي) — نص/أيقونات/تبويب نشط على الداكن */
+  --color-primary: #6ba5ff;
+  --color-primary-dark: #2d5bd6;  /* قاعدة الزر (نص أبيض) + حالة الضغط */
+  --color-primary-light: #17223d; /* خلفية مميّزة خفيفة: دوائر التصنيف/الشارات */
+  --color-sky: #93c5fd;           /* روابط/شارات حداثة ثانوية */
+  --color-cta: #3866db;           /* بداية تدرّج الزر الرئيسي (نص أبيض، AA) */
 
   /* العروض والأخطاء */
   --color-amber: #fbbf24;
-  --color-amber-light: #2a2f23; /* رقاقة عرض (amber tint داكن) */
+  --color-amber-light: #2a2a1d; /* رقاقة عرض (amber tint داكن) */
   --color-danger: #f87171;
 
-  /* النصوص — السلّم المكتوم مضبوط ليحقق WCAG AA على أغمق سطح (بطاقة) */
-  --color-ink: #f1f5f9;    /* أساسي */
-  --color-ink-2: #a6b4c4;  /* ثانوي (مرفوع قليلاً من #94A3B8 لتجاوز AA على البطاقة) */
-  --color-ink-3: #7c8ba0;  /* معطّل/تبويب غير نشط (مرفوع قليلاً من #64748B لعتبة الواجهة) */
+  /* النصوص — أبيض ومكتوم، مضبوط ليحقق WCAG AA على أغمق سطح */
+  --color-ink: #f8fafc;    /* أساسي (أبيض) */
+  --color-ink-2: #a2b2cc;  /* ثانوي */
+  --color-ink-3: #7e8da8;  /* معطّل/تبويب غير نشط */
 
-  /* الأسعار */
-  --color-price: #5eead4;
+  /* الأسعار — أزرق فاتح متناغم */
+  --color-price: #93c5fd;
 
   /* خزان الصورة الأبيض — صور المنتجات تُصوَّر على خلفية فاتحة */
   --color-imagewell: #ffffff;
@@ -42,29 +44,27 @@
   --radius-btn: 12px;
   --radius-sheet: 24px;
 
-  /* ظلال خفيفة فقط — العمق من الطبقات والحدود */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --glow-teal: 0 0 24px rgba(45, 212, 191, 0.15);
+  /* ظلال خفيفة + وهج أزرق للأفعال الرئيسية */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --glow-teal: 0 6px 20px rgba(61, 111, 229, 0.35); /* (اسم قديم) = وهج أزرق */
 
-  /* ===== عكس سلّم الرمادي ليقرأ على الداكن =====
-     الفاتح يصبح داكناً والداكن يصبح فاتحاً، فتبقى نوايا الفئات صحيحة:
-     text-gray-900 → نص فاتح، bg-gray-100 → لوحة داكنة، border-gray-200 → خط شعري */
-  --color-gray-50: #0c3446;
-  --color-gray-100: #103c4f;
-  --color-gray-200: #1b4a60;
-  --color-gray-300: #2c5b72;
-  --color-gray-400: #64748b;
-  --color-gray-500: #94a3b8;
-  --color-gray-600: #a8b6c6;
-  --color-gray-700: #cbd5e1;
-  --color-gray-800: #e2e8f0;
-  --color-gray-900: #f1f5f9;
+  /* ===== عكس سلّم الرمادي (مائل للكحلي) ليقرأ على الداكن ===== */
+  --color-gray-50: #121a2c;
+  --color-gray-100: #172033;
+  --color-gray-200: #28344f; /* خط شعري */
+  --color-gray-300: #3a4865;
+  --color-gray-400: #7e8da8; /* مكتوم */
+  --color-gray-500: #a2b2cc; /* ثانوي */
+  --color-gray-600: #b9c5d8;
+  --color-gray-700: #d4dce8;
+  --color-gray-800: #e7ecf3;
+  --color-gray-900: #f8fafc;
 
   /* سلّم الأحمر (تدميري) متوافق مع الداكن */
-  --color-red-50: #3a2222;
-  --color-red-100: #4a2626;
-  --color-red-200: #6e3333;
-  --color-red-300: #8a4040;
+  --color-red-50: #2e1d22;
+  --color-red-100: #3f2328;
+  --color-red-200: #5e3036;
+  --color-red-300: #7e3f45;
   --color-red-400: #f87171;
   --color-red-500: #f87171;
   --color-red-600: #fca5a5;
@@ -92,7 +92,7 @@ body {
 .t-card { font-size: 15px; font-weight: 500; line-height: 1.45; }
 .t-caption { font-size: 12px; color: var(--color-ink-2); line-height: 1.4; }
 
-/* الأسعار: أرقام غربية ثابتة العرض داخل RTL بلون التيل الفاتح */
+/* الأسعار: أرقام غربية ثابتة العرض داخل RTL بلون أزرق فاتح */
 .price-mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum";
@@ -102,10 +102,10 @@ body {
   color: var(--color-price);
 }
 
-/* بطاقة قياسية: سطح داكن + حد شعري 1px (FFFFFF14) بلا ظل ثقيل */
+/* بطاقة قياسية: سطح داكن + حد شعري 1px بلا ظل ثقيل */
 .card {
   background: var(--color-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
 }
@@ -116,19 +116,29 @@ body {
   border-radius: 12px;
 }
 
-/* وهج التيل لزر رئيسي + رقاقة "الأرخص" */
+/* وهج أزرق للأفعال الرئيسية + رقاقة "الأرخص" */
 .glow-teal { box-shadow: var(--glow-teal); }
 
-/* وهج شعاعي خفيف جداً لرأس الصفحة الرئيسة فقط */
+/* زر رئيسي بتدرّج أزرق→بنفسجي ونص أبيض (CTA) */
+.btn-primary {
+  background-image: linear-gradient(135deg, var(--color-cta) 0%, #5b57e8 100%);
+  color: #ffffff;
+  box-shadow: var(--glow-teal);
+}
+.btn-primary:active:not(:disabled) { filter: brightness(0.94); }
+.btn-primary:disabled { background-image: none; background-color: var(--color-gray-300); color: var(--color-ink-3); box-shadow: none; }
+
+/* وهج شعاعي أزرق خفيف لرأس الصفحة الرئيسة */
 .home-glow {
   background:
-    radial-gradient(120% 80% at 80% -10%, rgba(45, 212, 191, 0.16), transparent 60%),
+    radial-gradient(120% 80% at 85% -15%, rgba(61, 111, 229, 0.22), transparent 60%),
+    radial-gradient(90% 60% at 10% -10%, rgba(91, 87, 232, 0.12), transparent 55%),
     var(--color-app);
 }
 
 /* حالات الضغط على كل الأزرار */
 button, a[role="button"] {
-  transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
 }
 button:active:not(:disabled), a[role="button"]:active {
   transform: scale(0.98);
@@ -143,7 +153,7 @@ button:active:not(:disabled), a[role="button"]:active {
 
 /* وميض السكيلتون: من card إلى elevated */
 .skeleton {
-  background: linear-gradient(90deg, #0d425a 25%, #11506c 50%, #0d425a 75%);
+  background: linear-gradient(90deg, #1a2236 25%, #232e47 50%, #1a2236 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 8px;
@@ -156,10 +166,10 @@ button:active:not(:disabled), a[role="button"]:active {
 /* أشرطة تمرير داكنة */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1b4a60 transparent;
+  scrollbar-color: #2a3656 transparent;
 }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
-*::-webkit-scrollbar-thumb { background: #1b4a60; border-radius: 999px; }
+*::-webkit-scrollbar-thumb { background: #2a3656; border-radius: 999px; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 input[type="number"]::-webkit-outer-spin-button,
