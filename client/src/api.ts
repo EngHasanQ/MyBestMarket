@@ -107,6 +107,8 @@ export const api = {
   generateMonthly: () => post<ListDetail>('/lists/generate-monthly'),
   setListStatus: (id: number, status: 'draft' | 'active' | 'completed') =>
     patch<ShoppingList>(`/lists/${id}`, { status }),
+  renameList: (id: number, title: string) => patch<ShoppingList>(`/lists/${id}`, { title }),
+  deleteList: (id: number) => del<{ ok: boolean }>(`/lists/${id}`),
   checkItem: (listId: number, itemId: number, body: { isPurchased: boolean; actualPrice?: number }) =>
     patch<{ item: unknown; priceReport: unknown }>(`/lists/${listId}/items/${itemId}`, body),
   finishList: (id: number) => post<FinishResult>(`/lists/${id}/finish`),

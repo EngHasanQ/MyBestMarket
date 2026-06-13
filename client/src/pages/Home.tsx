@@ -30,8 +30,8 @@ export default function Home() {
 
   return (
     <div>
-      {/* رأس مضغوط: تحية + قيمة + بحث، بوهج تيل شعاعي خفيف (B3) */}
-      <header className="home-glow border-b border-white/8 px-4 pb-5 pt-6">
+      {/* تحية + بحث بارز بوهج أزرق شعاعي خفيف */}
+      <section className="home-glow px-4 pb-5 pt-5">
         <p className="text-sm/6 text-ink-2">أهلاً {user?.name?.split(' ')[0]}</p>
         <h1 className="t-page mt-0.5">قارن الأسعار ووفّر في مدينتك</h1>
         <form onSubmit={search} className="relative mt-4">
@@ -47,7 +47,7 @@ export default function Home() {
             className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-ink-3"
           />
         </form>
-      </header>
+      </section>
 
       {draft && (
         <Link to={`/list/${draft.id}`} className="card mx-4 mt-4 flex items-center gap-3 p-4">

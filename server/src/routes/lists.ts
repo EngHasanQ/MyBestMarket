@@ -195,18 +195,41 @@ listsRouter.post('/generate-monthly', async (req, res, next) => {
   }
 });
 
-const statusSchema = z.object({ status: z.enum(['draft', 'active', 'completed']) });
+// تعديل القائمة: الحالة و/أو الاسم (إعادة تسمية)
+const patchListSchema = z
+  .object({
+    status: z.enum(['draft', 'active', 'completed']).optional(),
+    title: z.string().trim().min(1).max(120).optional(),
+  })
+  .refine((b) => b.status !== undefined || b.title !== undefined, {
+    message: 'لا تغيير',
+  });
 
 listsRouter.patch('/:id', async (req, res, next) => {
   try {
     const list = await getOwnedList(Number(req.params.id), req.user!.id);
-    const body = statusSchema.parse(req.body);
+    const body = patchListSchema.parse(req.body);
+    const set: Partial<typeof schema.shoppingLists.$inferInsert> = {};
+    if (body.status !== undefined) set.status = body.status;
+    if (body.title !== undefined) set.title = body.title;
     const [updated] = await db
       .update(schema.shoppingLists)
-      .set({ status: body.status })
+      .set(set)
       .where(eq(schema.shoppingLists.id, list.id))
       .returning();
     res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// حذف قائمة بالكامل (مع بنودها)
+listsRouter.delete('/:id', async (req, res, next) => {
+  try {
+    const list = await getOwnedList(Number(req.params.id), req.user!.id);
+    await db.delete(schema.listItems).where(eq(schema.listItems.listId, list.id));
+    await db.delete(schema.shoppingLists).where(eq(schema.shoppingLists.id, list.id));
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

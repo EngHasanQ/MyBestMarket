@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { BottomNav } from './components/BottomNav';
+import { AppHeader } from './components/AppHeader';
 import { Spinner, ToastProvider } from './components/ui';
 
 const AuthPage = lazy(() => import('./pages/AuthPage'));
@@ -32,6 +33,7 @@ function WithNav() {
   const location = useLocation();
   return (
     <div className="mx-auto min-h-screen max-w-md pb-20">
+      <AppHeader />
       {/* انتقال 150ms بين الصفحات (3.4) */}
       <div key={location.pathname} className="page-enter">
         <Outlet />
