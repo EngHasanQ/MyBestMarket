@@ -50,7 +50,8 @@ catalogRouter.get('/categories', async (_req, res, next) => {
       .select()
       .from(schema.categories)
       .orderBy(asc(schema.categories.sortOrder), asc(schema.categories.id));
-    const mains = all.filter((c) => c.parentId == null);
+    // "غير مصنف" دلو إداري للمنتجات المُنشأة تلقائياً — لا يُعرض في شبكة أقسام المستخدم
+    const mains = all.filter((c) => c.parentId == null && c.slug !== 'uncategorized');
     res.json(
       mains.map((m) => ({ ...m, children: all.filter((c) => c.parentId === m.id) })),
     );
