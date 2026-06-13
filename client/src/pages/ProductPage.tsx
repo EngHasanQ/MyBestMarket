@@ -137,7 +137,7 @@ export default function ProductPage() {
                 <button
                   data-testid="evidence-button"
                   onClick={() => setEvidenceFor(c)}
-                  className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) border border-primary text-sm font-bold text-primary active:bg-primary-light"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) border border-primary text-sm font-bold text-primary active:bg-primary-light"
                 >
                   <FileSearch size={16} strokeWidth={2} />
                   إثبات السعر
@@ -145,7 +145,7 @@ export default function ProductPage() {
                 <button
                   data-testid="add-from-branch"
                   onClick={() => void addFrom(c.branchId)}
-                  className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) text-sm font-bold ${
+                  className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) text-sm font-bold ${
                     addedBranch === c.branchId
                       ? 'bg-primary-light text-primary'
                       : 'border border-primary text-primary active:bg-primary-light'
