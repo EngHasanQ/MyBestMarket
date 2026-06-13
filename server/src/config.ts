@@ -9,6 +9,15 @@ export const config = {
   isProd: process.env.NODE_ENV === 'production',
   googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
 
+  // إظهار البيانات التجريبية المبذورة في الكتالوج (A1).
+  // الافتراضي: مُطفأ — في الإنتاج يُعرض فقط البيانات الحقيقية المستوردة.
+  // مُفعَّل تلقائياً في الاختبارات/E2E ليبقى البذر مرئياً.
+  showDemoData:
+    process.env.SHOW_DEMO_DATA === '1' ||
+    process.env.SHOW_DEMO_DATA === 'true' ||
+    process.env.NODE_ENV === 'test' ||
+    (process.env.SHOW_DEMO_DATA == null && process.env.NODE_ENV !== 'production'),
+
   // سياسة قِدم الأسعار (القسم 2.5)
   staleDays: 14,
   staleOfferDays: 7,

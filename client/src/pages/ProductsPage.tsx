@@ -106,19 +106,39 @@ export default function ProductsPage() {
       {!products ? (
         <SkeletonGrid />
       ) : products.length === 0 ? (
-        <EmptyState
-          icon={PackageSearch}
-          text={q ? `لا نتائج لـ "${q}"` : 'لا منتجات في هذا القسم بعد'}
-          action={
-            q && !requested ? (
-              <Button onClick={requestProduct} variant="outline" testId="request-product">
-                اطلب إضافة هذا المنتج
-              </Button>
-            ) : requested ? (
-              <p className="text-sm font-bold text-primary">وصلنا طلبك</p>
-            ) : undefined
-          }
-        />
+        q ? (
+          <EmptyState
+            icon={PackageSearch}
+            text={`لا نتائج لـ "${q}"`}
+            action={
+              !requested ? (
+                <Button onClick={requestProduct} variant="outline" testId="request-product">
+                  اطلب إضافة هذا المنتج
+                </Button>
+              ) : (
+                <p className="text-sm font-bold text-primary">وصلنا طلبك</p>
+              )
+            }
+          />
+        ) : (
+          // A1: حالة فارغة صادقة — لا بيانات حقيقية لهذه المدينة بعد
+          <EmptyState
+            icon={PackageSearch}
+            text="جارٍ بناء قاعدة الأسعار لمدينتك — ارفع مجلة عروض أو فاتورة لتسريع ذلك"
+            action={
+              <div className="flex flex-col items-center gap-2" data-testid="empty-building">
+                <Link to="/receipt">
+                  <Button variant="primary" testId="empty-upload-receipt">
+                    ارفع فاتورة مشترياتك
+                  </Button>
+                </Link>
+                <p className="t-caption">
+                  أو راجع الأقسام لاحقاً — نضيف الأسعار فور اعتماد أول مجلة أو فاتورة
+                </p>
+              </div>
+            }
+          />
+        )
       ) : (
         // تقسيم دقيق: المنتجات مجمعة حسب تصنيفها الفرعي
         <div className="flex flex-col gap-4 px-4 pb-4">

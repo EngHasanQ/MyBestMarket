@@ -4,10 +4,37 @@ import { Router } from 'express';
 import { and, asc, eq, inArray, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
+import { config } from '../config.js';
 import { resolveProductPrices } from '../services/priceResolver.js';
 import { detectBestTimes } from '../services/bestTime.js';
 
 export const catalogRouter = Router();
+
+/**
+ * A1: مجموعة معرّفات المنتجات التي لها سعر حقيقي (غير تجريبي) في مدينة ما.
+ * تُستخدم لإخفاء بيانات البذر التجريبية عندما يكون SHOW_DEMO_DATA مُطفأً —
+ * فلا يُعرض إلا ما استُورد فعلياً (مجلات/فواتير/كشط حي).
+ */
+async function realProductIdsForCity(cityId: number): Promise<Set<number>> {
+  const branches = await db
+    .select({ id: schema.storeBranches.id })
+    .from(schema.storeBranches)
+    .where(and(eq(schema.storeBranches.cityId, cityId), eq(schema.storeBranches.isActive, true)));
+  if (branches.length === 0) return new Set();
+  const rows = await db
+    .selectDistinct({ productId: schema.prices.productId })
+    .from(schema.prices)
+    .where(
+      and(
+        eq(schema.prices.isDemo, false),
+        inArray(
+          schema.prices.branchId,
+          branches.map((b) => b.id),
+        ),
+      ),
+    );
+  return new Set(rows.map((r) => r.productId));
+}
 
 catalogRouter.get('/cities', async (_req, res, next) => {
   try {
@@ -51,6 +78,9 @@ catalogRouter.get('/products', async (req, res, next) => {
       categorySlug: string;
     }>;
 
+    // A1: عندما يكون SHOW_DEMO_DATA مُطفأً، اعرض فقط المنتجات التي لها سعر حقيقي
+    const realIds = config.showDemoData ? null : await realProductIdsForCity(query.cityId);
+
     if (query.q) {
       // البحث الموحد: مرادفات + مطبّع + pg_trgm بترتيب الصلة (جزء 4)
       const { searchProducts } = await import('../services/searchService.js');
@@ -63,8 +93,10 @@ catalogRouter.get('/products', async (req, res, next) => {
         const ids = new Set([query.categoryId, ...children.map((c) => c.id)]);
         rows = rows.filter((r) => ids.has(r.product.categoryId));
       }
+      if (realIds) rows = rows.filter((r) => realIds.has(r.product.id));
     } else {
       const filters = [ne(schema.products.status, 'merged')];
+      if (realIds) filters.push(inArray(schema.products.id, realIds.size ? [...realIds] : [-1]));
       if (query.categoryId) {
         // تصنيف رئيس يشمل أبناءه
         const children = await db

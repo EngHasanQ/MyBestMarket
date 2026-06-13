@@ -17,7 +17,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      'npm run seed --workspace=server && PORT=3100 APP_ORIGIN=http://localhost:3100 DISABLE_RATE_LIMIT=1 npm run start:e2e --workspace=server',
+      'npm run seed --workspace=server && PORT=3100 APP_ORIGIN=http://localhost:3100 DISABLE_RATE_LIMIT=1 SHOW_DEMO_DATA=1 npm run start:e2e --workspace=server',
     url: 'http://localhost:3100/api/health',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

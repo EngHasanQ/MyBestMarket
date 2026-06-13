@@ -141,6 +141,7 @@ export async function insertPrice(over: {
   isOffer?: boolean;
   offerEndsAt?: Date | null;
   lastVerifiedAt?: Date;
+  isDemo?: boolean;
 }) {
   const [row] = await db
     .insert(schema.prices)
@@ -153,6 +154,7 @@ export async function insertPrice(over: {
       confidence: over.confidence ?? 80,
       isOffer: over.isOffer ?? false,
       offerEndsAt: over.offerEndsAt ?? null,
+      isDemo: over.isDemo ?? false,
       lastVerifiedAt: over.lastVerifiedAt ?? new Date(),
       createdAt: over.lastVerifiedAt ?? new Date(),
     })

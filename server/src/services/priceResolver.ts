@@ -91,10 +91,16 @@ export async function resolveProductPrices(
   const storeByBranch = new Map(branches.map((b) => [b.id, b.storeId]));
 
   // آخر 10 أسعار لكل فرع تكفي للحل (append-only)
+  // A1: استبعاد الأسعار التجريبية ما لم يُفعَّل SHOW_DEMO_DATA
+  const priceFilters = [
+    eq(schema.prices.productId, productId),
+    inArray(schema.prices.branchId, branchIds),
+  ];
+  if (!config.showDemoData) priceFilters.push(eq(schema.prices.isDemo, false));
   const rows = await db
     .select()
     .from(schema.prices)
-    .where(and(eq(schema.prices.productId, productId), inArray(schema.prices.branchId, branchIds)))
+    .where(and(...priceFilters))
     .orderBy(desc(schema.prices.createdAt))
     .limit(400);
 

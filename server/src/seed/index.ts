@@ -220,6 +220,7 @@ export async function runSeed(opts: { wipe?: boolean } = {}): Promise<SeedCounts
           sizeValue: String(sizeValue),
           sizeUnit,
           categoryId: catBySlug.get(catSlug)!,
+          isDemo: true, // بيانات تجريبية مبذورة — تُخفى ما لم يُفعَّل SHOW_DEMO_DATA (A1)
         })),
       )
       .returning();
@@ -332,8 +333,10 @@ export async function runSeed(opts: { wipe?: boolean } = {}): Promise<SeedCounts
         }
       }
     }
-    for (let i = 0; i < priceValues.length; i += 500) {
-      await db.insert(schema.prices).values(priceValues.slice(i, i + 500));
+    // كل أسعار البذر تجريبية — تُخفى ما لم يُفعَّل SHOW_DEMO_DATA (A1)
+    const demoPriceValues = priceValues.map((v) => ({ ...v, isDemo: true }));
+    for (let i = 0; i < demoPriceValues.length; i += 500) {
+      await db.insert(schema.prices).values(demoPriceValues.slice(i, i + 500));
     }
     priceCount = priceValues.length;
   }

@@ -112,6 +112,8 @@ export const products = pgTable(
     // active: مُعتمد | auto_created: أنشأه الاستيراد وينتظر مراجعة | merged: دُمج في آخر
     status: productStatus('status').notNull().default('active'),
     mergedInto: integer('merged_into'),
+    // بيانات تجريبية مبذورة (ليست من مصدر حقيقي) — تُخفى ما لم يُفعَّل SHOW_DEMO_DATA (A1)
+    isDemo: boolean('is_demo').notNull().default(false),
   },
   (t) => [index('products_normalized_idx').on(t.normalizedName)],
 );
@@ -155,6 +157,8 @@ export const prices = pgTable(
     // (صفحة المجلة أو الفاتورة التي جاء منها السعر) — تُعرض للمستخدم
     sourceUrl: text('source_url'),
     proofImageUrl: text('proof_image_url'),
+    // سعر مبذور تجريبي — يُخفى ما لم يُفعَّل SHOW_DEMO_DATA (A1)
+    isDemo: boolean('is_demo').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }).notNull().defaultNow(),
   },
