@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { parseFlyerText } from '../../src/services/ocr/flyerParser.js';
+import {
+  parseFlyerText,
+  parseFlyerLine,
+  parseValidity,
+} from '../../src/services/ocr/flyerParser.js';
 import {
   decodeZatcaQr,
   encodeZatcaQr,
@@ -27,6 +31,45 @@ describe('parseFlyerText', () => {
   it('يرفض الأسعار غير المنطقية وأسطر بلا اسم', () => {
     const out = parseFlyerText('99999 ر.س\nاب 5\nمنتج جيد جداً 0 ر.س');
     expect(out).toHaveLength(0);
+  });
+
+  it('عرض مجمّع "2 بـ 15" → سعر الوحدة 7.5', () => {
+    const c = parseFlyerLine('تونة الشيف 3 علب 2 بـ 15 ر.س');
+    expect(c).not.toBeNull();
+    expect(c!.price).toBe(7.5);
+    expect(c!.productName).toContain('تونة');
+  });
+
+  it('عرض مجمّع بأرقام عربية "٣ بـ ٢١" → 7', () => {
+    const c = parseFlyerLine('عصير الربيع ٣ بـ ٢١ ر.س');
+    expect(c!.price).toBe(7);
+  });
+
+  it('سعر بأرقام هندية وفاصلة ٫: "٩٫٩٥"', () => {
+    const c = parseFlyerLine('لبن زبادي المراعي ٩٫٩٥ ر.س');
+    expect(c!.price).toBe(9.95);
+  });
+});
+
+describe('parseValidity (تواريخ صلاحية العروض)', () => {
+  it('يستخرج فترة "من ... إلى ..." ميلادية', () => {
+    const v = parseValidity('عروض سارية من 13 يونيو إلى 19 يونيو 2026 م');
+    expect(v.startsAt?.getUTCDate()).toBe(13);
+    expect(v.endsAt?.getUTCDate()).toBe(19);
+    expect(v.endsAt?.getUTCFullYear()).toBe(2026);
+    expect(v.endsAt?.getUTCMonth()).toBe(5); // يونيو
+  });
+
+  it('يستخرج تاريخ نهاية مفرداً من "سارية حتى"', () => {
+    const v = parseValidity('الأسعار سارية حتى 5 يوليو 2026');
+    expect(v.endsAt?.getUTCDate()).toBe(5);
+    expect(v.endsAt?.getUTCMonth()).toBe(6);
+  });
+
+  it('بلا تواريخ → null', () => {
+    const v = parseValidity('مرحباً بكم في أسواق وفّر');
+    expect(v.startsAt).toBeNull();
+    expect(v.endsAt).toBeNull();
   });
 });
 

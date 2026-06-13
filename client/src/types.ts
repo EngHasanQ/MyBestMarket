@@ -197,6 +197,20 @@ export interface ReviewItem {
   createdAt: string;
 }
 
+/** تقدّم معالجة مجلة PDF (A2) */
+export interface FlyerJobProgress {
+  id: string;
+  branchId: number;
+  status: 'running' | 'success' | 'failed';
+  pageCount: number;
+  processed: number;
+  candidates: number;
+  queued: number;
+  cropsSaved: number;
+  validity: { startsAt: string | null; endsAt: string | null } | null;
+  error?: string;
+}
+
 /** صف من job_runs (drizzle، حقول camelCase) */
 export interface JobRun {
   id: number;

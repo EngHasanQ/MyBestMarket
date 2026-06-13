@@ -9,6 +9,7 @@ import type {
   City,
   DiscoveredPlace,
   FinishResult,
+  FlyerJobProgress,
   JobRun,
   ListDetail,
   PriceAlert,
@@ -163,6 +164,18 @@ export const api = {
         body: form,
       });
     },
+    uploadFlyerPdf: (params: { branchId: number; pdf: File }) => {
+      const form = new FormData();
+      form.append('branchId', String(params.branchId));
+      form.append('pdf', params.pdf);
+      return request<{ jobId: string }>('/admin/flyers/upload-pdf', { method: 'POST', body: form });
+    },
+    flyerJob: (id: string) => get<FlyerJobProgress>(`/admin/flyers/jobs/${id}`),
+    approveAll: (branchId: number) =>
+      post<{ approved: number; autoCreated: number; evidenceCreated: number; total: number }>(
+        `/admin/review-queue/approve-all`,
+        { branchId },
+      ),
     jobs: () => get<AdminJobs>('/admin/jobs'),
     runJob: (name: string) => post<unknown>(`/admin/jobs/${name}/run`),
     jobRuns: () => get<JobRun[]>('/admin/job-runs'),

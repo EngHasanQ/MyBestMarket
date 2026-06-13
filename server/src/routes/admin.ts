@@ -2,14 +2,18 @@
 
 import { Router } from 'express';
 import multer from 'multer';
+import { randomUUID } from 'node:crypto';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
+import { logger } from '../logger.js';
 import { adminRequired } from '../middleware/auth.js';
 import { normalizeArabic } from '../services/normalize.js';
 import { submitPrice, accuracyKpi } from '../services/priceResolver.js';
-import { parseFlyerText } from '../services/ocr/flyerParser.js';
-import { matchProduct } from '../services/productMatcher.js';
+import { parseFlyerText, parseValidity } from '../services/ocr/flyerParser.js';
+import { matchProduct, autoCreateProduct } from '../services/productMatcher.js';
+import { processFlyerPdf } from '../services/ocr/flyerPdf.js';
+import { addEvidence } from '../services/evidence.js';
 import { runDiscoveryForCity, type PlaceResult } from '../services/discovery.js';
 import { qualifyStore, confirmSource, qualifyPendingStores } from '../services/sourceQualification.js';
 import { runJob, getJobNames } from '../jobs/framework.js';
@@ -312,6 +316,211 @@ adminRouter.post('/review-queue/:id/reject', async (req, res, next) => {
       .returning();
     if (!row) return res.status(404).json({ error: 'العنصر غير موجود أو مراجَع' });
     res.json(row);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- خط مجلات PDF متعددة الصفحات (A2) ----------
+// معالجة غير متزامنة مع مؤشر تقدّم: الرفع يردّ فوراً بـ jobId ثم يُعالَج بالخلفية.
+
+interface FlyerJob {
+  id: string;
+  branchId: number;
+  status: 'running' | 'success' | 'failed';
+  pageCount: number;
+  processed: number;
+  candidates: number;
+  queued: number;
+  cropsSaved: number;
+  validity: { startsAt: string | null; endsAt: string | null } | null;
+  error?: string;
+  startedAt: number;
+  finishedAt?: number;
+}
+
+const flyerJobs = new Map<string, FlyerJob>();
+
+/** نشر عنصر مراجعة مجلة كسعر موثق + دليل قصاصة؛ يعيد إن أُنشئ تلقائياً ودليل */
+async function publishFlyerItem(
+  item: typeof schema.offersReviewQueue.$inferSelect,
+  opts: { reviewerId: number; productId?: number; price?: number; offerEndsAt?: Date | null; autoCreate?: boolean },
+): Promise<{ priceId: number; autoCreated: boolean; evidenceCreated: boolean } | null> {
+  const branch = await db.query.storeBranches.findFirst({
+    where: eq(schema.storeBranches.id, item.branchId),
+  });
+  if (!branch) return null;
+
+  let productId = opts.productId ?? item.matchedProductId ?? null;
+  let autoCreated = false;
+  if (!productId && opts.autoCreate && item.parsedProductName) {
+    const created = await autoCreateProduct({ rawName: item.parsedProductName, storeId: branch.storeId });
+    productId = created.productId;
+    autoCreated = true;
+  }
+  if (!productId) return null;
+
+  const price = opts.price ?? (item.parsedPrice != null ? Number(item.parsedPrice) : null);
+  if (price == null) return null;
+
+  const flyerProfile = await db.query.storeSourceProfiles.findFirst({
+    where: and(
+      eq(schema.storeSourceProfiles.storeId, branch.storeId),
+      eq(schema.storeSourceProfiles.sourceType, 'flyer'),
+    ),
+  });
+
+  const [row] = await db
+    .insert(schema.prices)
+    .values({
+      productId,
+      branchId: item.branchId,
+      price: String(price),
+      source: 'flyer_ocr_verified',
+      basis: 'shelf',
+      isOffer: true,
+      offerEndsAt: opts.offerEndsAt ?? item.offerEndsAt ?? null,
+      confidence: baseConfidence('flyer_ocr_verified'),
+      reportedBy: opts.reviewerId,
+      proofImageUrl: item.flyerImageUrl,
+      sourceUrl: flyerProfile?.endpointOrUrl ?? null,
+    })
+    .returning({ id: schema.prices.id });
+
+  let evidenceCreated = false;
+  // قصاصة المنتج من صفحة المجلة هي الدليل (flyer_crop) — صورة فعلية لمصدر السعر
+  if (item.flyerImageUrl || flyerProfile?.endpointOrUrl) {
+    await addEvidence({
+      priceId: row!.id,
+      evidenceType: 'flyer_crop',
+      imagePath: item.flyerImageUrl,
+      sourceUrl: flyerProfile?.endpointOrUrl ?? null,
+    });
+    evidenceCreated = true;
+  }
+
+  await db
+    .update(schema.offersReviewQueue)
+    .set({ status: 'approved', reviewedBy: opts.reviewerId, matchedProductId: productId })
+    .where(eq(schema.offersReviewQueue.id, item.id));
+
+  return { priceId: row!.id, autoCreated, evidenceCreated };
+}
+
+adminRouter.post('/flyers/upload-pdf', upload.single('pdf'), async (req, res, next) => {
+  try {
+    const branchId = z.coerce.number().int().parse(req.body.branchId);
+    if (!req.file) return res.status(400).json({ error: 'أرفق ملف PDF للمجلة' });
+    const isPdf =
+      req.file.mimetype === 'application/pdf' || /\.pdf$/i.test(req.file.originalname ?? '');
+    if (!isPdf) return res.status(415).json({ error: 'الملف ليس PDF' });
+
+    const branch = await db.query.storeBranches.findFirst({
+      where: eq(schema.storeBranches.id, branchId),
+    });
+    if (!branch) return res.status(404).json({ error: 'الفرع غير موجود' });
+
+    const id = randomUUID();
+    const job: FlyerJob = {
+      id,
+      branchId,
+      status: 'running',
+      pageCount: 0,
+      processed: 0,
+      candidates: 0,
+      queued: 0,
+      cropsSaved: 0,
+      validity: null,
+      startedAt: Date.now(),
+    };
+    flyerJobs.set(id, job);
+    const reviewerId = req.user!.id;
+    const buffer = req.file.buffer;
+
+    // معالجة بالخلفية — لا ننتظرها في الطلب
+    void (async () => {
+      try {
+        const result = await processFlyerPdf(buffer, (processed, total, candidates) => {
+          job.processed = processed;
+          job.pageCount = total;
+          job.candidates = candidates;
+        });
+        const validity = parseValidity(result.coverText);
+        job.validity = {
+          startsAt: validity.startsAt?.toISOString() ?? null,
+          endsAt: validity.endsAt?.toISOString() ?? null,
+        };
+        // أدرج المرشّحين في قائمة المراجعة، كلٌّ بقصاصته دليلاً
+        for (const c of result.candidates) {
+          const match = await matchProduct(c.productName, branch.storeId);
+          await db.insert(schema.offersReviewQueue).values({
+            branchId,
+            kind: 'flyer',
+            rawText: c.rawText,
+            parsedProductName: c.productName,
+            parsedPrice: String(c.price),
+            matchedProductId: match?.productId ?? null,
+            flyerImageUrl: c.cropImageName, // اسم القصاصة في مخزن الأدلة
+            offerEndsAt: validity.endsAt ?? null,
+            status: 'pending',
+          });
+          job.queued++;
+          if (c.cropImageName) job.cropsSaved++;
+        }
+        job.status = 'success';
+        job.finishedAt = Date.now();
+      } catch (err) {
+        job.status = 'failed';
+        job.error = String(err);
+        job.finishedAt = Date.now();
+        logger.error({ err: String(err) }, 'flyer pdf job failed');
+      }
+    })();
+
+    res.status(202).json({ jobId: id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get('/flyers/jobs/:id', (req, res) => {
+  const job = flyerJobs.get(req.params.id!);
+  if (!job) return res.status(404).json({ error: 'المهمة غير موجودة' });
+  res.json(job);
+});
+
+// اعتماد جماعي: ينشر كل عناصر المراجعة المعلّقة لفرع، ويُنشئ المنتجات غير المطابقة
+const approveAllSchema = z.object({
+  branchId: z.coerce.number().int(),
+  autoCreate: z.coerce.boolean().default(true),
+});
+
+adminRouter.post('/review-queue/approve-all', async (req, res, next) => {
+  try {
+    const { branchId, autoCreate } = approveAllSchema.parse({ ...req.query, ...req.body });
+    const pending = await db
+      .select()
+      .from(schema.offersReviewQueue)
+      .where(
+        and(
+          eq(schema.offersReviewQueue.branchId, branchId),
+          eq(schema.offersReviewQueue.status, 'pending'),
+          eq(schema.offersReviewQueue.kind, 'flyer'),
+        ),
+      )
+      .limit(500);
+
+    let approved = 0;
+    let autoCreated = 0;
+    let evidenceCreated = 0;
+    for (const item of pending) {
+      const r = await publishFlyerItem(item, { reviewerId: req.user!.id, autoCreate });
+      if (!r) continue;
+      approved++;
+      if (r.autoCreated) autoCreated++;
+      if (r.evidenceCreated) evidenceCreated++;
+    }
+    res.json({ approved, autoCreated, evidenceCreated, total: pending.length });
   } catch (err) {
     next(err);
   }
