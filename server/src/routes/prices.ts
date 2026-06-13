@@ -58,13 +58,19 @@ pricesRouter.post('/receipt', upload.single('image'), async (req, res, next) => 
 
     let text = body.ocrText ?? null;
     let proofImageUrl: string | null = null;
+    let receiptBuffer: Buffer | null = null;
+    // أسطر OCR بصناديقها — لتظليل (قصّ) سطر البند المطابق دليلاً
+    let ocrLines: Array<{ text: string; box: [number, number, number, number] }> = [];
     if (req.file) {
       // صورة الفاتورة تُحفظ كدليل يُعرض بجانب كل سعر موثق منها
       const { saveUpload } = await import('../uploads.js');
       proofImageUrl = saveUpload(req.file.buffer, req.file.originalname);
+      receiptBuffer = req.file.buffer;
       if (!text) {
-        const { ocrImage } = await import('../services/ocr/engine.js');
-        text = await ocrImage(req.file.buffer);
+        // OCR على مستوى الأسطر: نشتق النص للتحليل ونحتفظ بالصناديق للقصّ
+        const { ocrImageLines } = await import('../services/ocr/imageLines.js');
+        ocrLines = await ocrImageLines(req.file.buffer);
+        text = ocrLines.map((l) => l.text).join('\n');
       }
     }
     if (!text) return res.status(400).json({ error: 'أرفق صورة الفاتورة أو نصها' });
@@ -107,6 +113,21 @@ pricesRouter.post('/receipt', upload.single('image'), async (req, res, next) => 
         });
         if (result.status === 'published' && proofImageUrl) {
           const { addEvidence } = await import('../services/evidence.js');
+          // تظليل سطر البند: اقصص منطقة السطر المطابق من صورة الفاتورة
+          let lineCrop: string | null = null;
+          if (receiptBuffer && ocrLines.length) {
+            const best = ocrLines
+              .map((l) => ({ l, s: similarity(l.text, line.rawText) }))
+              .sort((a, b) => b.s - a.s)[0];
+            if (best && best.s >= 0.3) {
+              const { cropImageRegion } = await import('../services/ocr/imageLines.js');
+              lineCrop = await cropImageRegion(receiptBuffer, best.l.box, 8);
+            }
+          }
+          // دليلان: السطر المظلَّل (إن وُجد) + صورة الفاتورة الكاملة
+          if (lineCrop) {
+            await addEvidence({ priceId: result.priceId, evidenceType: 'receipt', imagePath: lineCrop });
+          }
           await addEvidence({
             priceId: result.priceId,
             evidenceType: 'receipt',
