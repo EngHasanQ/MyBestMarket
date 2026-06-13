@@ -12,6 +12,7 @@
     "build": "npm run build --workspace=client && npm run build --workspace=server",
     "start": "npm run start --workspace=server",
     "seed": "npm run seed --workspace=server",
+    "ingest": "npm run ingest --workspace=server --",
     "db:migrate": "npm run db:migrate --workspace=server",
     "test": "npm run test --workspace=server",
     "test:e2e": "playwright test",
