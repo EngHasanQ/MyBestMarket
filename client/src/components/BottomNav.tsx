@@ -25,7 +25,7 @@ export function BottomNav() {
   }, [location.pathname]);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-surface pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/8 bg-nav pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex h-16 max-w-md items-stretch justify-around">
         {tabs.map((t) => (
           <NavLink
@@ -33,7 +33,7 @@ export function BottomNav() {
             to={t.to}
             className={({ isActive }) =>
               `relative flex min-w-11 flex-col items-center justify-center gap-0.5 px-2 text-[11px] ${
-                isActive ? 'font-bold text-primary' : 'text-ink-2'
+                isActive ? 'font-bold text-primary' : 'text-ink-3'
               }`
             }
           >

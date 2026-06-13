@@ -42,8 +42,9 @@ export function EvidenceSheet({
       <button aria-label="إغلاق" className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         data-testid="evidence-sheet"
-        className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-surface p-4 pb-[max(env(safe-area-inset-bottom),16px)]"
+        className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-(--radius-sheet) border-t border-white/8 bg-surface p-4 pb-[max(env(safe-area-inset-bottom),16px)]"
       >
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" aria-hidden />
         <div className="mb-3 flex items-center justify-between">
           <h2 className="t-section text-ink">إثبات السعر</h2>
           <button
@@ -61,7 +62,7 @@ export function EvidenceSheet({
           <>
             {imageUrl ? (
               <button
-                className={`block w-full overflow-hidden rounded-2xl border border-black/5 bg-cream ${
+                className={`image-well block w-full overflow-hidden border border-white/8 ${
                   zoomed ? '' : 'max-h-72'
                 }`}
                 onClick={() => setZoomed((z) => !z)}
@@ -73,7 +74,7 @@ export function EvidenceSheet({
                 />
               </button>
             ) : (
-              <div className="flex flex-col items-center gap-2 rounded-2xl bg-cream py-10 text-ink-2">
+              <div className="flex flex-col items-center gap-2 rounded-2xl bg-card py-10 text-ink-2">
                 <FileSearch size={32} strokeWidth={1.6} />
                 <p className="text-sm">لا يوجد إثبات مرفق — سعر مُدخل يدوياً</p>
               </div>

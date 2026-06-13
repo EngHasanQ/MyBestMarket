@@ -32,18 +32,18 @@ export default function AccountPage() {
     <div className="pb-6">
       <PageTitle>حسابي</PageTitle>
 
-      <div className="mx-4 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="mx-4 rounded-2xl bg-card p-4 shadow-sm">
         <p className="font-bold text-gray-900">{user.name}</p>
         <p className="text-sm text-gray-400" dir="ltr">
           {user.email}
         </p>
       </div>
 
-      <div className="mx-4 mt-3 flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="mx-4 mt-3 flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm">
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">المدينة</span>
           <select
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+            className="w-full rounded-xl border border-white/8 bg-surface px-3 py-2.5 text-sm text-ink focus:border-primary focus:outline-none"
             value={user.cityId ?? ''}
             onChange={(e) => void update({ cityId: Number(e.target.value) })}
           >
@@ -57,7 +57,7 @@ export default function AccountPage() {
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">يوم التسوق الشهري</span>
           <select
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+            className="w-full rounded-xl border border-white/8 bg-surface px-3 py-2.5 text-sm text-ink focus:border-primary focus:outline-none"
             value={user.shoppingDay ?? 4}
             onChange={(e) => void update({ shoppingDay: Number(e.target.value) })}
           >
@@ -72,7 +72,7 @@ export default function AccountPage() {
       </div>
 
       {alerts.length > 0 && (
-        <div className="mx-4 mt-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mx-4 mt-3 rounded-2xl bg-card p-4 shadow-sm">
           <h2 className="t-section mb-2 flex items-center gap-1.5 text-ink">
             <Bell size={17} strokeWidth={1.8} /> تنبيهات الأسعار
           </h2>

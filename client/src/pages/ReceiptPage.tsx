@@ -58,7 +58,7 @@ export default function ReceiptPage() {
               </option>
             ))}
           </select>
-          <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white text-gray-400">
+          <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-card text-gray-400">
             <Camera size={32} strokeWidth={1.5} />
             <span className="text-sm">{file ? file.name : 'التقط صورة الفاتورة'}</span>
             <input
@@ -94,7 +94,7 @@ export default function ReceiptPage() {
             <div
               key={m.line}
               data-testid="receipt-matched-line"
-              className="flex items-center justify-between rounded-xl border border-primary-light bg-white px-3 py-2.5"
+              className="flex items-center justify-between rounded-xl border border-primary-light bg-card px-3 py-2.5"
             >
               <div>
                 <p className="text-sm font-medium text-gray-900">{m.productName}</p>
@@ -154,7 +154,7 @@ function UnmatchedLine({
   };
 
   return (
-    <div data-testid="receipt-unmatched-line" className="rounded-xl border border-amber-light bg-white p-3">
+    <div data-testid="receipt-unmatched-line" className="rounded-xl border border-amber-light bg-card p-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-900">{line.productName}</p>
         <span className="price-mono text-sm font-bold">{priceLabel(line.price)}</span>

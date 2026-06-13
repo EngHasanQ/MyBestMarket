@@ -11,10 +11,10 @@ export function FreshnessBadge({
   stale: boolean;
 }) {
   const color = stale
-    ? 'bg-gray-500/10 text-gray-500'
+    ? 'bg-gray-500/10 text-ink-2'
     : confidence >= 90
-      ? 'bg-primary/10 text-primary-dark'
-      : 'bg-sky-700/10 text-sky-800';
+      ? 'bg-primary/10 text-primary'
+      : 'bg-sky/10 text-sky';
   return (
     <span data-testid="freshness-badge" className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${color}`}>
       {stale ? `قديم — ${label}` : label}
@@ -32,7 +32,7 @@ export function OfferBadge({ endsAt }: { endsAt?: string | null }) {
 
 export function EstimatedBadge() {
   return (
-    <span className="rounded-full bg-orange-600/10 px-2 py-0.5 text-[11px] font-medium text-orange-700">
+    <span className="rounded-full bg-sky/10 px-2 py-0.5 text-[11px] font-medium text-sky">
       تقديري
     </span>
   );

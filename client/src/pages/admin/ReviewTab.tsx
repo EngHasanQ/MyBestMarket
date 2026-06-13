@@ -34,7 +34,7 @@ export function ReviewTab() {
   return (
     <div className="flex flex-col gap-3">
       {items.map((item) => (
-        <div key={item.id} data-testid="review-row" className="rounded-2xl bg-white p-4 shadow-sm">
+        <div key={item.id} data-testid="review-row" className="rounded-2xl bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-2">
             <div>
               <span
@@ -67,7 +67,7 @@ export function ReviewTab() {
               data-testid="approve-review"
               onClick={() => void act(item, 'approve')}
               disabled={!item.matchedProductId}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white disabled:bg-gray-200"
+              className="rounded-xl glow-teal bg-primary px-4 py-2 text-sm font-bold text-app disabled:bg-gray-200"
             >
               اعتماد
             </button>

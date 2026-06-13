@@ -21,13 +21,18 @@ export function ProductImage({
 
   const url = src && thumb && src.startsWith('/api/evidence/img/') ? `${src}?thumb=1` : src;
 
+  const hasImage = Boolean(url) && !failed;
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-cream">
-      {url && !failed ? (
+    <div
+      className={`relative aspect-square w-full overflow-hidden rounded-xl ${
+        hasImage ? 'image-well' : 'bg-primary-light'
+      }`}
+    >
+      {hasImage ? (
         <>
           {!loaded && <div className="skeleton absolute inset-0" />}
           <img
-            src={url}
+            src={url ?? undefined}
             alt={alt}
             loading="lazy"
             onLoad={() => setLoaded(true)}
@@ -36,7 +41,7 @@ export function ProductImage({
           />
         </>
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-gray-300">
+        <div className="flex h-full w-full items-center justify-center text-primary/60">
           <Icon size={40} strokeWidth={1.4} />
         </div>
       )}

@@ -32,7 +32,7 @@ export function JobsTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 font-bold text-gray-900">الوظائف</h2>
         <div className="flex flex-col gap-2">
           {jobs.jobs.map((name) => {
@@ -68,7 +68,7 @@ export function JobsTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 font-bold text-gray-900">آخر التشغيلات</h2>
         <table className="w-full text-xs">
           <thead>

@@ -48,7 +48,7 @@ export function ProductCard({ product }: { product: Product }) {
 
       {product.cheapest ? (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span data-testid="product-price" className="price-mono text-lg font-semibold text-primary">
+          <span data-testid="product-price" className="price-mono text-lg font-semibold">
             {priceLabel(product.cheapest.price)}
           </span>
           {product.cheapest.isOffer && <OfferBadge />}
@@ -70,7 +70,9 @@ export function ProductCard({ product }: { product: Product }) {
         disabled={busy}
         onClick={add}
         className={`flex h-10 items-center justify-center gap-1 rounded-(--radius-btn) text-sm font-bold ${
-          added ? 'bg-primary-light text-primary' : 'bg-primary text-white active:bg-primary-dark'
+          added
+            ? 'bg-primary-light text-primary'
+            : 'glow-teal bg-primary text-app active:bg-primary-dark'
         }`}
       >
         {added ? (

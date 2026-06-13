@@ -28,14 +28,14 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl pb-10">
-      <header className="flex items-center justify-between bg-primary px-4 py-3 text-white">
+      <header className="flex items-center justify-between border-b border-white/8 bg-nav px-4 py-3 text-ink">
         <h1 className="font-bold">لوحة إدارة وفّر</h1>
-        <Link to="/" className="text-sm opacity-80">
+        <Link to="/" className="text-sm text-primary">
           العودة للتطبيق
         </Link>
       </header>
 
-      <nav className="flex gap-1 overflow-x-auto border-b border-gray-100 bg-white px-2">
+      <nav className="flex gap-1 overflow-x-auto border-b border-white/8 bg-card px-2">
         {tabs.map((t) => (
           <button
             key={t.key}

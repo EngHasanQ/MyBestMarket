@@ -8,7 +8,7 @@ import { Button, inputClass } from '../../components/ui';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="rounded-2xl bg-white p-4 shadow-sm">
+    <details className="rounded-2xl bg-card p-4 shadow-sm">
       <summary className="cursor-pointer font-bold text-gray-900">{title}</summary>
       <div className="mt-3">{children}</div>
     </details>

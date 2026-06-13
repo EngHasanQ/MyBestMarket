@@ -17,17 +17,17 @@ export function DashboardTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+        <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
           <p data-testid="kpi-ratio" className="price-mono text-2xl font-extrabold text-primary">
             {data.kpi.ratio}%
           </p>
           <p className="mt-1 text-[11px] text-gray-500">أسعار موثقة وحديثة (≥90 و≤7 أيام)</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+        <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
           <p className="price-mono text-2xl font-extrabold text-gray-900">{data.kpi.displayed}</p>
           <p className="mt-1 text-[11px] text-gray-500">سعر معروض</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+        <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
           <p
             className={`price-mono text-2xl font-extrabold ${
               data.reviewQueue.overdue > 0 ? 'text-amber' : 'text-gray-900'
@@ -45,7 +45,7 @@ export function DashboardTab() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 font-bold text-gray-900">الدقة حسب المدينة</h2>
         <table className="w-full text-sm">
           <thead>

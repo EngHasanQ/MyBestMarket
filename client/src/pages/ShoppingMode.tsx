@@ -162,7 +162,7 @@ export default function ShoppingMode() {
           </div>
           <button
             onClick={() => navigate('/lists')}
-            className="mt-6 w-full rounded-xl bg-primary py-3 font-bold text-white"
+            className="glow-teal mt-6 w-full rounded-xl bg-primary py-3 font-bold text-app"
           >
             العودة لقوائمي
           </button>
@@ -173,12 +173,12 @@ export default function ShoppingMode() {
 
   return (
     <div className="mx-auto min-h-screen max-w-md pb-36">
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-primary px-4 py-3 text-white">
-        <Link to={`/list/${listId}`} className="flex min-h-11 items-center gap-1 text-sm opacity-90">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/8 bg-nav px-4 py-3 text-ink">
+        <Link to={`/list/${listId}`} className="flex min-h-11 items-center gap-1 text-sm text-primary">
           <ArrowRight size={16} strokeWidth={2} /> خروج
         </Link>
         <h1 className="font-bold">وضع التسوق</h1>
-        <span className="text-sm opacity-80">
+        <span className="text-sm text-ink-2">
           {purchased.length}/{list.items.length}
         </span>
       </header>
@@ -203,7 +203,7 @@ export default function ShoppingMode() {
                 key={item.id}
                 data-testid="shopping-item"
                 className={`rounded-2xl border p-3 transition-colors ${
-                  item.isPurchased ? 'border-primary-light bg-primary-light/40' : 'border-gray-100 bg-white'
+                  item.isPurchased ? 'border-primary/40 bg-primary-light/40' : 'border-white/8 bg-card'
                 }`}
               >
                 <button
@@ -212,7 +212,7 @@ export default function ShoppingMode() {
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
-                      item.isPurchased ? 'border-primary bg-primary text-white' : 'border-gray-300'
+                      item.isPurchased ? 'border-primary bg-primary text-app' : 'border-gray-300'
                     }`}
                   >
                     {item.isPurchased ? <Check size={15} strokeWidth={3} /> : ''}
@@ -266,7 +266,7 @@ export default function ShoppingMode() {
         </Link>
       </div>
 
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)]">
+      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-nav pb-[env(safe-area-inset-bottom)]">
         <div data-testid="running-total" className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <div className="text-xs text-gray-500">
             <p>
@@ -279,7 +279,7 @@ export default function ShoppingMode() {
           <button
             data-testid="finish-shopping"
             onClick={finish}
-            className="rounded-xl bg-primary px-5 py-3 font-bold text-white active:bg-primary-dark"
+            className="glow-teal rounded-xl bg-primary px-5 py-3 font-bold text-app active:bg-primary-dark"
           >
             إنهاء التسوق
           </button>

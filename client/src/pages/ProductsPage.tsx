@@ -66,7 +66,7 @@ export default function ProductsPage() {
       {!categoryId && (
         // شريط بحث لاصق عند التمرير (3.4)
         <form
-          className="sticky top-0 z-30 bg-cream px-4 pb-3 pt-1"
+          className="sticky top-0 z-30 bg-app px-4 pb-3 pt-1"
           onSubmit={(e) => {
             e.preventDefault();
             setParams(input.trim() ? { q: input.trim() } : {});
@@ -78,12 +78,12 @@ export default function ProductsPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="ابحث عن منتج أو علامة…"
-              className="h-12 w-full rounded-2xl border border-gray-200 bg-surface pe-4 ps-11 text-sm focus:border-primary focus:outline-none"
+              className="h-12 w-full rounded-2xl border border-white/8 bg-surface pe-4 ps-11 text-sm text-ink placeholder:text-ink-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
             <Search
               size={20}
               strokeWidth={1.8}
-              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-ink-3"
             />
           </div>
         </form>

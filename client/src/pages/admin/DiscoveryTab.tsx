@@ -46,7 +46,7 @@ export function DiscoveryTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-2 font-bold text-gray-900">تشغيل الاكتشاف</h2>
         <p className="mb-3 text-xs text-gray-500">
           يبحث عبر Google Places في شبكة تغطي المدينة — يُشغَّل شهرياً تلقائياً، والاستدعاء هنا يدوي.
@@ -67,7 +67,7 @@ export function DiscoveryTab() {
         {message && <p className="mt-2 text-sm font-medium text-primary">{message}</p>}
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 font-bold text-gray-900">ملفات المصادر</h2>
         <div className="flex flex-col gap-2">
           {profiles.map((p) => (
@@ -89,7 +89,7 @@ export function DiscoveryTab() {
               ) : (
                 <button
                   onClick={() => api.admin.confirmSource(p.id).then(load)}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white"
+                  className="rounded-lg glow-teal bg-primary px-3 py-1.5 text-xs font-bold text-app"
                 >
                   تأكيد وتفعيل
                 </button>
@@ -100,7 +100,7 @@ export function DiscoveryTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 font-bold text-gray-900">الأماكن المكتشفة</h2>
         <div className="flex flex-col gap-2">
           {places.map((p) => (

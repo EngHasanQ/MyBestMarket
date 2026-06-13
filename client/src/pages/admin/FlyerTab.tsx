@@ -61,7 +61,7 @@ export function FlyerTab() {
         ))}
       </select>
 
-      <label className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-gray-300 bg-white text-gray-400">
+      <label className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-gray-300 bg-card text-gray-400">
         <span className="text-xs font-bold text-gray-400">صورة المجلة</span>
         <span className="text-xs">{file ? file.name : 'صورة المجلة (اختياري)'}</span>
         <input

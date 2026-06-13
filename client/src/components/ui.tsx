@@ -72,10 +72,10 @@ export function Button({
   full?: boolean;
 }) {
   const styles = {
-    primary: 'bg-primary text-white active:bg-primary-dark disabled:bg-gray-300',
+    primary: 'glow-teal bg-primary text-app active:bg-primary-dark disabled:bg-gray-300 disabled:text-ink-3',
     outline: 'border border-primary text-primary bg-surface active:bg-primary-light',
     ghost: 'text-ink-2 active:bg-gray-100',
-    danger: 'border border-red-300 text-red-600 bg-surface active:bg-red-50',
+    danger: 'border border-red-300 text-danger bg-app active:bg-red-50',
   }[variant];
   return (
     <button
@@ -158,8 +158,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4">
           <div
             data-testid="toast"
-            className={`rounded-full px-4 py-2.5 text-sm font-bold text-white shadow-lg ${
-              toast.kind === 'success' ? 'bg-ink' : 'bg-red-600'
+            className={`rounded-full px-4 py-2.5 text-sm font-bold text-app shadow-lg ${
+              toast.kind === 'success' ? 'glow-teal bg-primary' : 'bg-danger'
             }`}
           >
             {toast.message}

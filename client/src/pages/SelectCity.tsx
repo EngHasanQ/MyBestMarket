@@ -120,7 +120,7 @@ export default function SelectCity() {
                 className={`rounded-2xl border-2 px-2 py-3 text-center text-sm transition-colors ${
                   selected === c.id
                     ? 'border-primary bg-primary-light font-bold text-primary'
-                    : 'border-gray-200 bg-white text-gray-700'
+                    : 'border-white/8 bg-card text-ink'
                 }`}
               >
                 <Building2 size={20} strokeWidth={1.6} className="mx-auto mb-1" />

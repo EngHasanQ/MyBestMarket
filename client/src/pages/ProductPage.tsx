@@ -87,7 +87,7 @@ export default function ProductPage() {
       </div>
 
       {bestTime && (
-        <div className="mx-4 mt-3 flex items-start gap-2 rounded-(--radius-card) bg-primary-light p-3 text-sm font-medium text-primary-dark">
+        <div className="mx-4 mt-3 flex items-start gap-2 rounded-(--radius-card) bg-primary-light p-3 text-sm font-medium text-primary">
           <Lightbulb size={18} strokeWidth={1.8} className="mt-0.5 shrink-0" />
           {bestTime.labelAr}
         </div>
@@ -105,21 +105,21 @@ export default function ProductPage() {
             <div
               key={c.branchId}
               data-testid="comparison-row"
-              className={`card p-4 ${i === 0 ? 'border-primary' : ''}`}
+              className={`card p-4 ${i === 0 ? 'glow-teal border-primary' : ''}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="t-card font-bold text-ink">
                     {c.branch?.storeName}
                     {i === 0 && (
-                      <span className="mr-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                      <span className="mr-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-app">
                         الأرخص
                       </span>
                     )}
                   </p>
                   <p className="t-caption mt-0.5">{c.branch?.nameAr}</p>
                 </div>
-                <p className="price-mono text-lg font-semibold text-primary">{priceLabel(c.price)}</p>
+                <p className="price-mono text-lg font-semibold">{priceLabel(c.price)}</p>
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -137,7 +137,7 @@ export default function ProductPage() {
                 <button
                   data-testid="evidence-button"
                   onClick={() => setEvidenceFor(c)}
-                  className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) border border-gray-300 text-sm font-bold text-ink-2 active:bg-gray-50"
+                  className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-(--radius-btn) border border-primary text-sm font-bold text-primary active:bg-primary-light"
                 >
                   <FileSearch size={16} strokeWidth={2} />
                   إثبات السعر
