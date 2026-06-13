@@ -83,6 +83,7 @@ export function createTamimiAdapter(opts: TamimiOptions = {}): StoreAdapter {
         headers: {
           'User-Agent': 'WaffirBot/1.0 (+https://waffir.app/bot)',
           Accept: 'application/json',
+          'Accept-Language': 'ar', // أسماء المنتجات بالعربية
         },
       });
       if (!res.ok) return null;

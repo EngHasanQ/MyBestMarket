@@ -7,12 +7,12 @@ import { db, schema } from '../db/index.js';
 import { createTamimiAdapter, TAMIMI_TOP_CATEGORIES } from '../adapters/tamimiStorefront.js';
 import type { StoreAdapter } from '../adapters/types.js';
 import { autoCreateProduct, matchProduct, saveAlias } from '../services/productMatcher.js';
-import { addEvidence, downloadEvidenceImage, publicEvidenceUrl } from '../services/evidence.js';
+import { addEvidence } from '../services/evidence.js';
 import { submitPrice } from '../services/priceResolver.js';
 
 export interface IngestOptions {
   storeSlug: string;
-  cityCode: string;
+  cityCode?: string; // غير محدد → كل فروع المتجر في كل المدن (زحف واحد، تغطية وطنية)
   dryRun?: boolean;
   maxPagesPerCategory?: number;
   categories?: string[];
@@ -58,23 +58,34 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
   });
   if (!store) throw new Error(`المتجر غير موجود في القاعدة: ${opts.storeSlug}`);
 
-  const city = await db.query.cities.findFirst({ where: eq(schema.cities.code, opts.cityCode) });
-  if (!city) throw new Error(`المدينة غير موجودة: ${opts.cityCode}`);
+  // مدينة محددة → فلترة الفروع بها؛ بلا مدينة → كل فروع المتجر (وطنياً)
+  let cityId: number | null = null;
+  if (opts.cityCode) {
+    const city = await db.query.cities.findFirst({ where: eq(schema.cities.code, opts.cityCode) });
+    if (!city) throw new Error(`المدينة غير موجودة: ${opts.cityCode}`);
+    cityId = city.id;
+  }
 
-  const branches = await db
+  const branchFilters = [
+    eq(schema.storeBranches.storeId, store.id),
+    eq(schema.storeBranches.isActive, true),
+  ];
+  if (cityId != null) branchFilters.push(eq(schema.storeBranches.cityId, cityId));
+  let branches = await db
     .select()
     .from(schema.storeBranches)
-    .where(
-      and(
-        eq(schema.storeBranches.storeId, store.id),
-        eq(schema.storeBranches.cityId, city.id),
-        eq(schema.storeBranches.isActive, true),
-      ),
-    );
+    .where(and(...branchFilters));
+
+  // وضع كل المدن: السعر الإلكتروني وطني — يكفي فرع واحد لكل مدينة (تقليل الكتابة)
+  if (cityId == null) {
+    const byCity = new Map<number, (typeof branches)[number]>();
+    for (const b of branches) if (!byCity.has(b.cityId)) byCity.set(b.cityId, b);
+    branches = [...byCity.values()];
+  }
 
   const report: IngestReport = {
     storeSlug: opts.storeSlug,
-    cityCode: opts.cityCode,
+    cityCode: opts.cityCode ?? 'all',
     dryRun,
     pagesCrawled: 0,
     productsFound: 0,
@@ -88,7 +99,7 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
   };
 
   if (branches.length === 0 && !dryRun) {
-    throw new Error(`لا فروع نشطة لـ ${opts.storeSlug} في ${opts.cityCode}`);
+    throw new Error(`لا فروع نشطة لـ ${opts.storeSlug} في ${opts.cityCode ?? 'كل المدن'}`);
   }
 
   const profile = await db.query.storeSourceProfiles.findFirst({
@@ -100,8 +111,8 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
     pagesCrawled++;
   });
 
-  log(`بدء الاستيراد: ${opts.storeSlug} → ${opts.cityCode} (${branches.length} فرع)${dryRun ? ' [تجريبي]' : ''}`);
-  const catalog = await adapter.fetchCatalog(opts.cityCode);
+  log(`بدء الاستيراد: ${opts.storeSlug} → ${opts.cityCode ?? 'كل المدن'} (${branches.length} فرع)${dryRun ? ' [تجريبي]' : ''}`);
+  const catalog = await adapter.fetchCatalog(opts.cityCode ?? '');
   report.pagesCrawled = pagesCrawled;
   report.productsFound = catalog.length;
   report.withImage = catalog.filter((p) => p.imageUrl).length;
@@ -129,20 +140,15 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
       }
       const productId = match.productId;
 
-      // صورة المنتج من نفس المصدر → دليل product_image
-      let evidenceImage: string | null = null;
-      if (item.imageUrl) {
-        evidenceImage = await downloadEvidenceImage(item.imageUrl);
-        if (evidenceImage) {
-          report.imagesDownloaded++;
-          const localUrl = publicEvidenceUrl(evidenceImage);
-          if (localUrl) {
-            await db
-              .update(schema.products)
-              .set({ imageUrl: localUrl })
-              .where(eq(schema.products.id, productId));
-          }
-        }
+      // صورة المنتج من مصدرها: نشير لرابط CDN البعيد مباشرة (يظهر دون تخزين
+      // محلي — يعمل على Railway). نُحدّث صورة المنتج لتظهر في البطاقات والمقارنة.
+      const remoteImage = item.imageUrl ?? null;
+      if (remoteImage) {
+        report.imagesDownloaded++;
+        await db
+          .update(schema.products)
+          .set({ imageUrl: remoteImage })
+          .where(eq(schema.products.id, productId));
       }
 
       for (const branch of branches) {
@@ -156,11 +162,11 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
         });
         if (result.status === 'published') {
           report.pricesWritten++;
-          if (evidenceImage || item.productUrl || chainSourceUrl) {
+          if (remoteImage || item.productUrl || chainSourceUrl) {
             await addEvidence({
               priceId: result.priceId,
               evidenceType: 'product_image',
-              imagePath: evidenceImage,
+              imagePath: remoteImage, // رابط الصورة الأصلي (يُمرَّر كما هو للعرض)
               sourceUrl: item.productUrl ?? chainSourceUrl,
             });
             report.evidenceCreated++;

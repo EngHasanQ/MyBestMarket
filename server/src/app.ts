@@ -23,7 +23,23 @@ export function createApp() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: config.isProd ? undefined : false,
+      // CSP إنتاجي يسمح بخطوط جوجل وصور المتاجر البعيدة (CDN) — وإلا تُحجب
+      // الصور والخطوط على النشر. التطوير بلا CSP.
+      contentSecurityPolicy: config.isProd
+        ? {
+            useDefaults: true,
+            directives: {
+              'default-src': ["'self'"],
+              'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+              'script-src': ["'self'"],
+              'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+              'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+              'connect-src': ["'self'", 'https:'],
+              'worker-src': ["'self'", 'blob:'],
+              'upgrade-insecure-requests': [],
+            },
+          }
+        : false,
     }),
   );
   app.use(cors({ origin: config.appOrigin, credentials: true }));

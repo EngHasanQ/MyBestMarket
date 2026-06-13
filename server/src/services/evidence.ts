@@ -79,9 +79,11 @@ export async function addEvidence(input: {
   });
 }
 
-/** عنوان عام لصورة دليل (الأسماء المحلية تُغلَّف بنقطة الخدمة المخولة) */
+/** عنوان عام لصورة دليل. روابط http(s) البعيدة (CDN المتجر) تُمرَّر كما هي —
+ * فتظهر الصور دون تخزين محلي (مهم على استضافة بقرص مؤقت كـ Railway). */
 export function publicEvidenceUrl(imagePath: string | null, thumb = false): string | null {
   if (!imagePath) return null;
+  if (/^https?:\/\//i.test(imagePath)) return imagePath; // صورة المصدر البعيدة
   if (imagePath.startsWith('/')) return imagePath;
   return `/api/evidence/img/${imagePath}${thumb ? '?thumb=1' : ''}`;
 }
