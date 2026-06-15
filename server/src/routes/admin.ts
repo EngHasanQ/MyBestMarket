@@ -14,6 +14,7 @@ import { parseFlyerText, parseValidity } from '../services/ocr/flyerParser.js';
 import { matchProduct, autoCreateProduct } from '../services/productMatcher.js';
 import { processFlyerPdf } from '../services/ocr/flyerPdf.js';
 import { runRealIngestJob, AUTO_INGEST_JOB } from '../ingest/runIngest.js';
+import { discoverViaOSM } from '../services/osmDiscovery.js';
 import { addEvidence } from '../services/evidence.js';
 import { runDiscoveryForCity, type PlaceResult } from '../services/discovery.js';
 import { qualifyStore, confirmSource, qualifyPendingStores } from '../services/sourceQualification.js';
@@ -504,6 +505,17 @@ adminRouter.post('/ingest/real', async (_req, res, next) => {
       logger.error({ err: String(err) }, 'فشل الاستيراد اليدوي'),
     );
     res.status(202).json({ started: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// اكتشاف فروع المتاجر مجاناً عبر OpenStreetMap (بلا مفتاح Google)
+adminRouter.post('/discovery/osm', async (req, res, next) => {
+  try {
+    const cityId = z.coerce.number().int().parse(req.body.cityId);
+    const stats = await discoverViaOSM(cityId);
+    res.json(stats);
   } catch (err) {
     next(err);
   }
