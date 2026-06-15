@@ -57,17 +57,26 @@ test('مجلة → قائمة المراجعة → اعتماد → السعر �
 
   // السعر المعتمد منشور في الكتالوج بمصدر flyer_ocr_verified
   const published = await page.evaluate(async () => {
-    const queue = await fetch('/api/admin/review-queue?status=approved', {
-      credentials: 'include',
-    }).then((r) => r.json());
-    const approved = queue[0];
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    // استطلاع: انتظر ظهور عنصر معتمد له منتج مطابق (تفادي سباق الزمن)
+    let approved: { matchedProductId: number; branchId: number } | undefined;
+    for (let i = 0; i < 10 && !approved; i++) {
+      const queue = await fetch('/api/admin/review-queue?status=approved', {
+        credentials: 'include',
+      }).then((r) => r.json());
+      approved = (queue as Array<{ matchedProductId: number; branchId: number }>).find(
+        (q) => q.matchedProductId,
+      );
+      if (!approved) await sleep(300);
+    }
+    if (!approved) throw new Error('لا عنصر معتمد بمنتج مطابق');
     const me = await fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json());
     const product = await fetch(
       `/api/products/${approved.matchedProductId}?cityId=${me.cityId}`,
       { credentials: 'include' },
     ).then((r) => r.json());
     return product.comparisons.find(
-      (c: { branchId: number }) => c.branchId === approved.branchId,
+      (c: { branchId: number }) => c.branchId === approved!.branchId,
     );
   });
   expect(published.source).toBe('flyer_ocr_verified');

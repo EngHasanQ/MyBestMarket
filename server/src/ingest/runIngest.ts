@@ -39,6 +39,34 @@ export interface IngestReport {
   errors: number;
 }
 
+/** يخمّن تصنيفنا (slug) من مسار تصنيف المتجر واسم المنتج — لجعل المنتجات قابلة للتصفح */
+export function guessCategorySlug(path: string | null | undefined, name: string): string | null {
+  const t = `${path ?? ''} ${name}`.toLowerCase();
+  const has = (...ks: string[]) => ks.some((k) => t.includes(k));
+  if (has('diaper', 'baby', 'infant', 'حفاظ', 'حفاض', 'أطفال', 'رضع', 'رضّع')) return 'baby';
+  if (has('dairy', 'milk', 'cheese', 'yogurt', 'laban', 'egg', 'حليب', 'جبن', 'زبادي', 'لبن', 'بيض', 'قشطة', 'زبدة'))
+    return 'dairy';
+  if (has('bakery', 'bread', 'bun', 'pastry', 'cake', 'خبز', 'معجنات', 'مخبوز', 'كيك', 'فطائر', 'فطيرة', 'صامولي', 'تورتيلا', 'كرواسون'))
+    return 'bakery';
+  if (has('meat', 'poultry', 'chicken', 'beef', 'lamb', 'fish', 'seafood', 'لحم', 'لحوم', 'دجاج', 'سمك', 'بقري', 'غنم', 'فراخ', 'كبدة'))
+    return 'meat-poultry';
+  if (has('vegetable', 'fruit', 'produce', 'فواكه', 'فاكهة', 'خضار', 'خضروات', 'تمر', 'تمور'))
+    return 'produce';
+  if (has('beverage', 'juice', 'water', 'drink', 'soda', 'cola', 'coffee', 'tea', 'عصير', 'ماء', 'مياه', 'مشروب', 'شاي', 'قهوة', 'كولا', 'نسكافيه'))
+    return 'beverages';
+  if (has('clean', 'detergent', 'laundry', 'dishwash', 'تنظيف', 'منظف', 'غسيل', 'صحون', 'مبيد', 'معطر', 'مطهر'))
+    return 'cleaning';
+  if (has('paper', 'tissue', 'towel', 'foil', 'trash', 'disposable', 'ورق', 'مناديل', 'محارم', 'قمامة', 'أكياس', 'ألمنيوم', 'فحم'))
+    return 'household';
+  if (has('personal', 'shampoo', 'shower', 'oral', 'tooth', 'deodorant', 'shav', 'skin', 'feminine', 'عناية', 'شامبو', 'صابون', 'أسنان', 'حلاقة', 'بشرة', 'مزيل'))
+    return 'personal-care';
+  if (has('appliance', 'kettle', 'iron', 'fryer', 'battery', 'جهاز', 'غلاية', 'مكواة', 'بطار'))
+    return 'small-appliances';
+  if (has('rice', 'pasta', 'flour', 'sugar', 'oil', 'ghee', 'cereal', 'breakfast', 'canned', 'legume', 'nuts', 'snack', 'chocolate', 'biscuit', 'أرز', 'رز', 'معكرونة', 'دقيق', 'سكر', 'زيت', 'سمن', 'حبوب', 'معلب', 'مكسرات', 'شيبس', 'بسكويت', 'شوكولا', 'بقول', 'عدس', 'فول', 'شعيرية', 'مربى', 'عسل', 'توابل', 'ملح'))
+    return 'staples';
+  return null;
+}
+
 function buildAdapter(opts: IngestOptions, onPage: () => void): StoreAdapter {
   if (opts.storeSlug === 'tamimi') {
     return createTamimiAdapter({
@@ -112,6 +140,12 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
   });
   const chainSourceUrl = profile?.endpointOrUrl ?? null;
 
+  // خريطة slug التصنيف → id لتصنيف المنتجات المستوردة (قابلة للتصفح)
+  const catRows = await db
+    .select({ id: schema.categories.id, slug: schema.categories.slug })
+    .from(schema.categories);
+  const catBySlug = new Map(catRows.map((c) => [c.slug, c.id]));
+
   const adapter = buildAdapter(opts, () => {
     pagesCrawled++;
   });
@@ -147,15 +181,18 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
       }
       const productId = match.productId;
 
-      // صورة المنتج من مصدرها: نشير لرابط CDN البعيد مباشرة (يظهر دون تخزين
-      // محلي — يعمل على Railway). نُحدّث صورة المنتج لتظهر في البطاقات والمقارنة.
+      // تصنيف المنتج ضمن تصنيفاتنا (قابل للتصفح) + صورة المصدر البعيدة
+      const slug = guessCategorySlug(item.storeCategoryPath, item.rawName);
+      const categoryId = slug ? catBySlug.get(slug) : undefined;
       const remoteImage = item.imageUrl ?? null;
+      const set: Partial<typeof schema.products.$inferInsert> = {};
       if (remoteImage) {
+        set.imageUrl = remoteImage;
         report.imagesDownloaded++;
-        await db
-          .update(schema.products)
-          .set({ imageUrl: remoteImage })
-          .where(eq(schema.products.id, productId));
+      }
+      if (categoryId) set.categoryId = categoryId;
+      if (Object.keys(set).length > 0) {
+        await db.update(schema.products).set(set).where(eq(schema.products.id, productId));
       }
 
       for (const branch of branches) {
