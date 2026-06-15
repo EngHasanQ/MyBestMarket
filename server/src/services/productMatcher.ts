@@ -28,6 +28,7 @@ async function resolveMerged(productId: number): Promise<number> {
 export async function matchProduct(
   rawName: string,
   storeId?: number | null,
+  opts?: { barcode?: string | null; allowFuzzy?: boolean },
 ): Promise<MatchResult | null> {
   // 1) مطابقة قطعية عبر alias المتجر
   if (storeId != null) {
@@ -50,7 +51,24 @@ export async function matchProduct(
     }
   }
 
-  // 2) مطابقة ضبابية: مرشّحون عبر pg_trgm ثم ترتيب بمعامل Dice
+  // 2) مطابقة قطعية عبر الباركود (موثوقة — تمنع الخلط بين منتجات متشابهة الاسم)
+  const barcode = opts?.barcode?.trim();
+  if (barcode) {
+    const byBarcode = await db.query.products.findFirst({
+      where: and(eq(schema.products.barcode, barcode), ne(schema.products.status, 'merged')),
+    });
+    if (byBarcode) {
+      const resolvedId = await resolveMerged(byBarcode.id);
+      const product = await db.query.products.findFirst({
+        where: eq(schema.products.id, resolvedId),
+      });
+      if (product) return { productId: product.id, nameAr: product.nameAr, score: 1, via: 'alias' };
+    }
+  }
+
+  // 3) مطابقة ضبابية (اختيارية): تُعطَّل للكشط لتفادي إلصاق صورة/سعر بمنتج خاطئ
+  if (opts?.allowFuzzy === false) return null;
+
   const normalized = normalizeArabic(rawName);
   if (!normalized) return null;
   const candidates = await db

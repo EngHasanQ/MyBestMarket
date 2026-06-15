@@ -2,16 +2,18 @@
 // يُزحف الكتالوج العام، تُنزَّل صور المنتجات كأدلّة (product_image)، وتُنشر
 // الأسعار بأساس "online". وضع dry-run يثبت الوصول ويعدّ دون أي كتابة للقاعدة.
 
-import { and, eq, lte, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db, schema } from '../db/index.js';
 import { createTamimiAdapter, TAMIMI_TOP_CATEGORIES } from '../adapters/tamimiStorefront.js';
 import type { StoreAdapter } from '../adapters/types.js';
-import { autoCreateProduct, matchProduct, saveAlias } from '../services/productMatcher.js';
+import { autoCreateProduct, matchProduct } from '../services/productMatcher.js';
 import { addEvidence } from '../services/evidence.js';
 import { submitPrice } from '../services/priceResolver.js';
 import { logger } from '../logger.js';
 
-export const AUTO_INGEST_JOB = 'auto_ingest_real';
+// v2: مطابقة بالباركود (لا تخمين) + إخفاء كل منتجات البذر — يُعيد التشغيل
+// مرّة واحدة على النشر القادم لتصحيح أي بيانات مطابقة خاطئة سابقة.
+export const AUTO_INGEST_JOB = 'auto_ingest_real_v2';
 
 export interface IngestOptions {
   storeSlug: string;
@@ -128,7 +130,11 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
 
   for (const item of catalog) {
     try {
-      let match = await matchProduct(item.rawName, store.id);
+      // مطابقة بالباركود فقط (لا تخمين) — يمنع إلصاق صورة/سعر بمنتج مختلف الاسم
+      let match = await matchProduct(item.rawName, store.id, {
+        barcode: item.barcode,
+        allowFuzzy: false,
+      });
       if (!match) {
         match = await autoCreateProduct({
           rawName: item.rawName,
@@ -138,8 +144,6 @@ export async function runIngest(opts: IngestOptions): Promise<IngestReport> {
           storeCategoryPath: item.storeCategoryPath,
         });
         report.autoCreated++;
-      } else if (match.score >= 0.8 && match.score < 1) {
-        await saveAlias(match.productId, store.id, item.rawName);
       }
       const productId = match.productId;
 
@@ -209,16 +213,19 @@ export async function runRealIngestJob(opts: { force?: boolean; log?: (l: string
     .returning({ id: schema.jobRuns.id });
 
   try {
-    const [{ maxId }] = await db
-      .select({ maxId: sql<number>`coalesce(max(${schema.prices.id}), 0)` })
-      .from(schema.prices);
-    const beforeMax = Number(maxId) || 0;
-
     const report = await runIngest({ storeSlug: 'tamimi', log });
 
-    if (report.pricesWritten > 0 && beforeMax > 0) {
-      await db.update(schema.prices).set({ isDemo: true }).where(lte(schema.prices.id, beforeMax));
-      log(`أُخفيت بيانات البذر الاصطناعية القديمة (حتى السعر #${beforeMax})`);
+    // بعد نجاح الاستيراد: أظهر فقط المنتجات الحقيقية المستوردة (auto_created)،
+    // وأخفِ أسعار منتجات البذر الاصطناعية (status='active') حتى لا تظهر بصور خاطئة.
+    if (report.pricesWritten > 0) {
+      const hidden = await db
+        .update(schema.prices)
+        .set({ isDemo: true })
+        .where(
+          sql`product_id IN (SELECT id FROM products WHERE status = 'active')`,
+        )
+        .returning({ id: schema.prices.id });
+      log(`أُخفيت أسعار ${hidden.length} من منتجات البذر الاصطناعية`);
     }
     await db
       .update(schema.jobRuns)
